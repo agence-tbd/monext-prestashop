@@ -4,7 +4,7 @@
  *
  * @author    Monext <support@payline.com>
  * @copyright Monext - http://www.payline.com
- * @version   2.2.7
+ * @version   2.2.8
  */
 
 if (!defined('_PS_VERSION_')) {
@@ -90,7 +90,7 @@ class payline extends PaymentModule
         $this->name = 'payline';
         $this->tab = 'payments_gateways';
         $this->module_key = '';
-        $this->version = '2.2.7';
+        $this->version = '2.2.8';
         $this->author = 'Monext';
         $this->need_instance = true;
 
@@ -231,7 +231,7 @@ class payline extends PaymentModule
             || !$this->registerHook('displayAdminOrderLeft')
             || !$this->registerHook('displayCustomerAccount')
             || !$this->registerHook('actionAdminOrdersListingResultsModifier')
-            || !$this->registerHook('actionObjectOrderSlipAddAfter')
+            || !$this->registerHook('actionObjectOrderSlipAddBefore')
             || !$this->registerHook('actionOrderStatusUpdate')
             || (version_compare(_PS_VERSION_, '1.7.0.0', '<') && !$this->registerHook('displayPayment'))
             || !$this->registerHook('paymentReturn')
@@ -309,8 +309,14 @@ class payline extends PaymentModule
             $idOrder = (int)Tools::getValue('id_order');
             $order = new Order($idOrder);
             if (Validate::isLoadedObject($order)) {
-                // Process full refund of a specific order
-                $this->processFullOrderRefund($order);
+                //If partial refund exist block process. todo modif l348 and add specificAmount
+                $ordersSlip = OrderSlip::getOrdersSlip($order->id_customer, (int)$order->id);
+                if(!count($ordersSlip)) {
+                    // Process full refund of a specific order
+                    $this->processFullOrderRefund($order);
+                } else {
+                    $this->context->controller->errors[] = $this->l('Partial refund exist, please continue with partial refund button');
+                }
             }
         } elseif (Tools::getValue('controller') == 'AdminOrders' && Tools::getValue('id_order') && Tools::getValue('paylineCaptureOK')) {
             // Capture OK, show confirmation message
@@ -336,41 +342,38 @@ class payline extends PaymentModule
         $orderPayments = OrderPayment::getByOrderReference($order->reference);
         if (sizeof($orderPayments)) {
             // Retrieve transaction ID
-            $paylineTransaction = current($orderPayments);
+            $paylineTransaction = current($orderPayments );
             $idTransaction = $paylineTransaction->transaction_id;
 
             $transaction = PaylinePaymentGateway::getTransactionInformations($idTransaction);
             if (PaylinePaymentGateway::isValidResponse($transaction)) {
                 $refund = PaylinePaymentGateway::refundTransaction($idTransaction, null, $this->l('Manual refund from PrestaShop BackOffice'));
                 if (PaylinePaymentGateway::isValidResponse($refund)) {
-                    // Refund OK
-                    // Change order state
-                    $history = new OrderHistory();
-                    $history->id_order = (int)$order->id;
-                    $history->changeIdOrderState(_PS_OS_REFUND_, (int)$order->id);
-                    $history->addWithemail();
-
-                    // Force reload of $order (because it has been edited by OrderHistory)
-                    $order = new Order($order->id);
-
-                    $orderInvoice = new OrderInvoice($order->invoice_number);
-                    if (!Validate::isLoadedObject($orderInvoice)) {
-                        $orderInvoice = null;
-                    }
-
                     $orderSlipDetailsList = array();
-                    // Amount for refund
-                    $amountToRefund = $transaction['payment']['amount'] / 100;
+                    $products = $order->getProducts(false, false, true, false);
+                    foreach ($products as $product) {
+                        $orderSlipDetailsList[$product['id_order_detail']] = [
+                            "quantity" => $product['product_quantity'],
+                            "id_order_detail" => $product['id_order_detail'],
+                            "unit_price" => $product['unit_price_tax_excl'],
+                            "amount" => $product['unit_price_tax_incl'] * $product['product_quantity'],
+                        ];
+                    }
 
                     // Create order slip (available since PS 1.6.0.11)
                     if (method_exists('OrderSlip', 'create')) {
                         OrderSlip::create($order, $orderSlipDetailsList, null);
                     }
 
-                    $this->addOrderPaymentAfterRefund($order, $amountToRefund * -1, null, $refund['transaction']['id'], null, null, $orderInvoice);
-
                     // Wait 1s because Payline API may take some time to be updated after a refund
                     sleep(1);
+
+                    // Refund OK
+                    // Change order state
+                    $history = new OrderHistory();
+                    $history->id_order = (int)$order->id;
+                    $history->changeIdOrderState(_PS_OS_REFUND_, (int)$order->id);
+                    $history->addWithemail();
 
                     Tools::redirectAdmin($this->context->link->getAdminLink('AdminOrders') . '&id_order=' . $order->id . '&vieworder&paylineFullRefundOK=1');
                 } else {
@@ -612,7 +615,9 @@ class payline extends PaymentModule
                 // Do we allow capture action ?
                 $allowCapture = !count($order->getHistory((int)$this->context->language->id, false, true, OrderState::FLAG_PAID));
                 // Do we allow refund action ?
-                $allowRefund = !$allowCapture && !count($order->getHistory((int)$this->context->language->id, _PS_OS_REFUND_, true));
+                $allowRefund = (!$allowCapture
+                    && !count($order->getHistory((int)$this->context->language->id, _PS_OS_REFUND_, true))
+                    && !count(OrderSlip::getOrdersSlip($order->id_customer, $order->id)));
                 // Do we allow reset action
                 $allowReset = $allowCapture;
 
@@ -667,7 +672,7 @@ class payline extends PaymentModule
      * @param array $params
      * @return void
      */
-    public function hookActionObjectOrderSlipAddAfter($params)
+    public function hookActionObjectOrderSlipAddBefore($params)
     {
         // Prevent order slip creation in case we are into a full refund process
         if (Tools::getValue('paylineProcessFullRefund')) {
@@ -682,8 +687,8 @@ class payline extends PaymentModule
             && $order->module == $this->name
             && $order->hasBeenPaid()
             && $amountToRefund > 0
-            && !Tools::getValue('generateDiscount') && !Tools::getValue('generateDiscountRefund')) {
-            $idTransaction = null;
+            && !Tools::getValue('generateDiscount') && !Tools::getValue('generateDiscountRefund'))
+        {
             $orderPayments = OrderPayment::getByOrderReference($order->reference);
             if (sizeof($orderPayments)) {
                 // Retrieve transaction ID
@@ -701,7 +706,19 @@ class payline extends PaymentModule
                             $orderInvoice = null;
                         }
 
-                        $this->addOrderPaymentAfterRefund($order, $amountToRefund * -1, null, $refund['transaction']['id'], null, null, $orderInvoice);
+                        $products = $order->getProducts(false, false, false, false);
+                        $totalRefund = array();
+                        foreach ($products as $product) {
+                            $totalRefund[$product['product_id']] = $product['product_quantity_refunded'] >= $product['product_quantity'];
+                        }
+
+                        //Set State REFUND IF all product are refunds
+                        if(!in_array(false, $totalRefund)) {
+                            $history = new OrderHistory();
+                            $history->id_order = (int)$order->id;
+                            $history->changeIdOrderState(_PS_OS_REFUND_, (int)$order->id);
+                            $history->addWithemail();
+                        }
 
                         // Wait 1s because Payline API may take some time to be updated after a refund
                         sleep(1);
@@ -3013,45 +3030,6 @@ class payline extends PaymentModule
             ob_clean();
         }
         die(Tools::jsonEncode(array('result' => $notificationResult)));
-    }
-
-    /**
-     * Clone of Order::addOrderPayment()
-     * @since 2.0.0
-     * @return bool
-     */
-    protected function addOrderPaymentAfterRefund(Order $order, $amount_paid, $payment_method = null, $payment_transaction_id = null, $currency = null, $date = null, $order_invoice = null)
-    {
-        $order_payment = new OrderPayment();
-        $order_payment->order_reference = $order->reference;
-        $order_payment->id_currency = ($currency ? $currency->id : $order->id_currency);
-        // we kept the currency rate for historization reasons
-        $order_payment->conversion_rate = ($currency ? $currency->conversion_rate : 1);
-        // if payment_method is define, we used this
-        $order_payment->payment_method = ($payment_method ? $payment_method : $order->payment);
-        $order_payment->transaction_id = $payment_transaction_id;
-        $order_payment->amount = $amount_paid;
-        $order_payment->date_add = ($date ? $date : null);
-
-        $order->total_paid_real = max(0, $order->total_paid_real - abs($amount_paid));
-
-        // We put autodate parameter of add method to true if date_add field is null
-        $res = $order_payment->add(is_null($order_payment->date_add)) && $order->update();
-
-        if (!$res) {
-            return false;
-        }
-
-        if (!is_null($order_invoice)) {
-            $res = Db::getInstance()->execute('
-            INSERT INTO `'._DB_PREFIX_.'order_invoice_payment` (`id_order_invoice`, `id_order_payment`, `id_order`)
-            VALUES('.(int)$order_invoice->id.', '.(int)$order_payment->id.', '.(int)$order->id.')');
-
-            // Clear cache
-            Cache::clean('order_invoice_paid_*');
-        }
-
-        return $res;
     }
 
     /**

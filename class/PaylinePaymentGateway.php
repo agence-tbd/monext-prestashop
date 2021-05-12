@@ -465,11 +465,12 @@ class PaylinePaymentGateway
         $instance->addPrivateData(array('key' => 'payment_method', 'value' => (int)$paymentMethod));
         $result = $instance->doWebPayment($params);
 
-        if (self::isValidResponse($result)) {
-            return array($result, $params);
+        if ($error = self::getErrorResponse($result)) {
+            $instance->getLogger()->addError(json_encode($error));
+            return array(null, $params);
         }
 
-        return array(null, $params);
+        return array($result, $params);
     }
 
     /**
@@ -505,6 +506,10 @@ class PaylinePaymentGateway
         }
 
         $result = $instance->doRecurrentWalletPayment($params);
+
+        if ($error = self::getErrorResponse($result)) {
+            $instance->getLogger()->addError(json_encode($error));
+        }
 
         return $result;
     }
@@ -628,6 +633,9 @@ class PaylinePaymentGateway
      * @since 2.0.0
      * @param Address $address
      * @return array
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
+     * @doc https://docs.payline.com/display/DT/Object+-+address
      */
     private static function formatAddressForPaymentRequest(Address $address)
     {
@@ -648,17 +656,17 @@ class PaylinePaymentGateway
         }
 
         return array(
-            'name' => $address->alias,
-            'firstName' => $address->firstname,
-            'lastName' => $address->lastname,
-            'street1' => $address->address1,
-            'street2' => $address->address2,
-            'cityName' => $address->city,
-            'zipCode' => $address->postcode,
-            'country' => $countryIsoCode,
-            'state' => $stateIsoCode,
-            'phone' => str_replace(array(' ', '.', '(', ')', '-'), '', $address->phone),
-            'mobilePhone' => str_replace(array(' ', '.', '(', ')', '-'), '', $address->phone_mobile),
+            'name' => substr($address->alias, 0, 100),
+            'firstName' => substr($address->firstname, 0, 100),
+            'lastName' => substr($address->lastname, 0, 100),
+            'street1' => substr($address->address1, 0, 100),
+            'street2' => substr($address->address2, 0, 100),
+            'cityName' => substr($address->city, 0, 40),
+            'zipCode' => substr($address->postcode, 0, 12),
+            'country' => substr($countryIsoCode, 0, 15),
+            'state' => substr($stateIsoCode, 0, 15),
+            'phone' => substr(str_replace(array(' ', '.', '(', ')', '-'), '', $address->phone), 0, 15),
+            'mobilePhone' => substr(str_replace(array(' ', '.', '(', ')', '-'), '', $address->phone_mobile), 0, 15),
         );
     }
 
@@ -672,6 +680,10 @@ class PaylinePaymentGateway
     {
         if (!is_array($result)) {
             return $result;
+        }
+
+        if ($error = self::getErrorResponse($result)) {
+            self::getInstance()->getLogger()->addError(json_encode($error));
         }
 
         $result['formatedPrivateDataList'] = array();
@@ -763,7 +775,9 @@ class PaylinePaymentGateway
         );
         $result = $instance->getTransactionDetails($params);
 
-        if (self::isValidResponse($result)) {
+        if ($error = self::getErrorResponse($result)) {
+            $instance->getLogger()->addError(json_encode($error));
+        } else {
             // Loop into result, format and sort some fields
             self::formatAndSortResult($result);
         }
@@ -809,6 +823,10 @@ class PaylinePaymentGateway
             'paymentRecordId' => $paymentRecordId,
         );
         $result = $instance->disablePaymentRecord($params);
+
+        if ($error = self::getErrorResponse($result)) {
+            $instance->getLogger()->addError(json_encode($error));
+        }
 
         return $result;
     }
@@ -876,6 +894,10 @@ class PaylinePaymentGateway
             $result = $instance->doCapture($params);
         }
 
+        if ($error = self::getErrorResponse($result)) {
+            $instance->getLogger()->addError(json_encode($error));
+        }
+
         return $result;
     }
 
@@ -909,6 +931,10 @@ class PaylinePaymentGateway
         // Do refund
         $result = $instance->doRefund($params);
 
+        if ($error = self::getErrorResponse($result)) {
+            $instance->getLogger()->addError(json_encode($error));
+        }
+
         return $result;
     }
 
@@ -932,6 +958,10 @@ class PaylinePaymentGateway
 
         // Do reset
         $result = $instance->doReset($params);
+
+        if ($error = self::getErrorResponse($result)) {
+            $instance->getLogger()->addError(json_encode($error));
+        }
 
         return $result;
     }

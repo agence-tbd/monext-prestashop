@@ -111,7 +111,7 @@
 </div>
 {/if}
 
-<div class="panel col-xs-12">
+<div class="panel">
 	<div class="panel-heading"><i class="icon-money"></i> {l s='Payline information' mod='payline'}</div>
 	{if $allowRefund}
 		<div class="well">
