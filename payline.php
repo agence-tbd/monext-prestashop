@@ -4,7 +4,7 @@
  *
  * @author    Monext <support@payline.com>
  * @copyright Monext - http://www.payline.com
- * @version   2.2.8
+ * @version   2.2.9
  */
 
 if (!defined('_PS_VERSION_')) {
@@ -90,8 +90,14 @@ class payline extends PaymentModule
         $this->name = 'payline';
         $this->tab = 'payments_gateways';
         $this->module_key = '';
-        $this->version = '2.2.8';
+        $this->version = '2.2.9';
+        $this->ps_versions_compliancy = array('min' => '1.7.1.0', 'max' => _PS_VERSION_);
         $this->author = 'Monext';
+
+        $this->is_eu_compatible = 1;
+        $this->currencies = true;
+        $this->currencies_mode = 'checkbox';
+
         $this->need_instance = true;
 
         $this->bootstrap = true;
