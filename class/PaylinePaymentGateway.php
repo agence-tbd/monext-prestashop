@@ -444,6 +444,12 @@ class PaylinePaymentGateway
             $params['recurring'] = self::getNxConfiguration($params['payment']['amount']);
         }
 
+
+
+        $defaultCategory = (int)Configuration::get('PAYLINE_DEFAULT_CATEGORY');
+        if(!$defaultCategory or $defaultCategory>26) {
+            $defaultCategory = null;
+        }
         // Add order details infos
         foreach ($context->cart->getProducts() as $cartProduct) {
             $instance->addOrderDetail(array(
@@ -451,7 +457,7 @@ class PaylinePaymentGateway
                 'price' => round((float)$cartProduct['price'] * 100),
                 'quantity' => (int)$cartProduct['cart_quantity'],
                 'comment' => (string)$cartProduct['name'],
-                'category' => 'Cat. ' . (int)$cartProduct['id_category_default'],
+                'category' =>  $defaultCategory,
                 'brand' => (int)$cartProduct['id_manufacturer'],
                 'taxRate' => round((float)$cartProduct['rate'] * 100),
             ));
