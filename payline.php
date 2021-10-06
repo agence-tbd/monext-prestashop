@@ -1812,6 +1812,18 @@ class payline extends PaymentModule
                             'label' => $this->l('Payment page customization ID'),
                             'placeholder' => '',
                         ),
+                        array(
+                            'type' => 'select',
+                            'desc' => $this->l('Category of item, needed for some contracts'),
+                            'name' => 'PAYLINE_DEFAULT_CATEGORY',
+                            'label' => $this->l('Default category'),
+                            'required' => true,
+                            'options' => array(
+                                'query' => $this->getConfigSelectList('default-category', PaylinePaymentGateway::WEB_PAYMENT_METHOD),
+                                'id' => 'value',
+                                'name' => 'name',
+                            ),
+                        ),
                     ),
                     'submit' => array(
                         'title' => $this->l('Save'),
@@ -1945,18 +1957,6 @@ class payline extends PaymentModule
                             'name' => 'PAYLINE_RECURRING_CUSTOM_CODE',
                             'label' => $this->l('Payment page customization ID'),
                             'placeholder' => '',
-                        ),
-                        array(
-                            'type' => 'select',
-                            'desc' => $this->l('Category of item, needed for some contracts'),
-                            'name' => 'PAYLINE_DEFAULT_CATEGORY',
-                            'label' => $this->l('Default category'),
-                            'required' => true,
-                            'options' => array(
-                                'query' => $this->getConfigSelectList('default-category', PaylinePaymentGateway::WEB_PAYMENT_METHOD),
-                                'id' => 'value',
-                                'name' => 'name',
-                            ),
                         ),
                     ),
                     'submit' => array(
