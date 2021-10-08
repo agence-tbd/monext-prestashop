@@ -4,7 +4,7 @@
  *
  * @author    Monext <support@payline.com>
  * @copyright Monext - http://www.payline.com
- * @version   2.2.8
+ * @version   2.2.9
  */
 
 if (!defined('_PS_VERSION_')) {
@@ -90,8 +90,14 @@ class payline extends PaymentModule
         $this->name = 'payline';
         $this->tab = 'payments_gateways';
         $this->module_key = '';
-        $this->version = '2.2.8';
+        $this->version = '2.2.9';
+        $this->ps_versions_compliancy = array('min' => '1.7.1.0', 'max' => _PS_VERSION_);
         $this->author = 'Monext';
+
+        $this->is_eu_compatible = 1;
+        $this->currencies = true;
+        $this->currencies_mode = 'checkbox';
+
         $this->need_instance = true;
 
         $this->bootstrap = true;
@@ -1407,6 +1413,7 @@ class payline extends PaymentModule
         return $helper->generateForm(array($this->getConfigForm($tabName)));
     }
 
+
     /**
      * Retrieve values for <select> items into HelperForm
      * @since 2.0.0
@@ -1416,7 +1423,36 @@ class payline extends PaymentModule
      */
     protected function getConfigSelectList($listName, $paymentMethod = null)
     {
-        if ($listName == 'payment-action') {
+        if ($listName == 'default-category') {
+            return array(
+                array( 'value' => '1', 'name' => $this->l('Computer (hardware and software)')),
+                array( 'value' => '2', 'name' => $this->l('Electronics - TV - Hifi')),
+                array( 'value' => '3', 'name' => $this->l('Phone')),
+                array( 'value' => '4', 'name' => $this->l('Home appliance')),
+                array( 'value' => '5', 'name' => $this->l('Habitat and garden')),
+                array( 'value' => '6', 'name' => $this->l('Fashion Clothing')),
+                array( 'value' => '7', 'name' => $this->l('Beauty product')),
+                array( 'value' => '8', 'name' => $this->l('Jewelry')),
+                array( 'value' => '9', 'name' => $this->l('Sport')),
+                array( 'value' => '10', 'name' => $this->l('Hobbies')),
+                array( 'value' => '11', 'name' => $this->l('Automobiles / motorcycles')),
+                array( 'value' => '12', 'name' => $this->l('furnishing')),
+                array( 'value' => '13', 'name' => $this->l('children')),
+                array( 'value' => '14', 'name' => $this->l('Video games')),
+                array( 'value' => '15', 'name' => $this->l('Toys')),
+                array( 'value' => '16', 'name' => $this->l('Animals')),
+                array( 'value' => '17', 'name' => $this->l('Food')),
+                array( 'value' => '18', 'name' => $this->l('Gifts')),
+                array( 'value' => '19', 'name' => $this->l('Shows')),
+                array( 'value' => '20', 'name' => $this->l('traveling')),
+                array( 'value' => '21', 'name' => $this->l('Auction')),
+                array( 'value' => '22', 'name' => $this->l('Particular services')),
+                array( 'value' => '23', 'name' => $this->l('Professional Services')),
+                array( 'value' => '24', 'name' => $this->l('Music')),
+                array( 'value' => '25', 'name' => $this->l('Book')),
+                array( 'value' => '26', 'name' => $this->l('Photo'))
+            );
+        } elseif ($listName == 'payment-action') {
             return array(
                 array(
                     'value' => 101,
@@ -1781,6 +1817,18 @@ class payline extends PaymentModule
                             'name' => 'PAYLINE_WEB_CASH_CUSTOM_CODE',
                             'label' => $this->l('Payment page customization ID'),
                             'placeholder' => '',
+                        ),
+                        array(
+                            'type' => 'select',
+                            'desc' => $this->l('Category of item, needed for some contracts'),
+                            'name' => 'PAYLINE_DEFAULT_CATEGORY',
+                            'label' => $this->l('Default category'),
+                            'required' => true,
+                            'options' => array(
+                                'query' => $this->getConfigSelectList('default-category', PaylinePaymentGateway::WEB_PAYMENT_METHOD),
+                                'id' => 'value',
+                                'name' => 'name',
+                            ),
                         ),
                     ),
                     'submit' => array(

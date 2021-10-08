@@ -1,11 +1,20 @@
+2.2.9
+===
+<h2>released on 2020-10-08</h2>
+<ul>
+<li>Add default category in configuration</li>
+</ul>
+
+
 2.2.8
 ===
 <h2>released on 2021-05-14</h2>
 <ul>
 <li>Fix refund</li>
-<li>Fix Payline admin template on mobile</li>
+<li>Fix Payline admin panel with multistore configuration</li>
 <li>Fix error Street max 100 char (cf : <a href="https://github.com/PaylineByMonext/payline-prestashop/issues/5">Adress >100 characters no error logged</a> and <a href="https://docs.payline.com/display/DT/Object+-+address">Doc Payline: Object - address</a>)</li>
 <li>Replace hook actionObjectOrderSlipAddAfter by actionObjectOrderSlipAddBefore</li>
+<li>Set API version to 21</li>
 </ul>
 
 2.2.7
