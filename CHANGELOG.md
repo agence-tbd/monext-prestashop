@@ -1,6 +1,9 @@
 2.2.9
 ===
-
+<h2>released on 2020-10-08</h2>
+<ul>
+<li>Add default category in configuration</li>
+</ul>
 
 
 2.2.8
