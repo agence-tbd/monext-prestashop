@@ -1,10 +1,17 @@
+2.2.10
+===
+<h2>released on 2022-01-13</h2>
+<ul>
+<li>Fix contract import (when only one by point of sell)</li>
+<li>Fix default category</li>
+</ul>
+
 2.2.9
 ===
-<h2>released on 2020-10-08</h2>
+<h2>released on 2021-10-08</h2>
 <ul>
 <li>Add default category in configuration</li>
 </ul>
-
 
 2.2.8
 ===

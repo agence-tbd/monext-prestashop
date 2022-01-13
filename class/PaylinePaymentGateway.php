@@ -203,6 +203,11 @@ class PaylinePaymentGateway
                 $disabledContracts = array();
                 $contractsList = $pos['contracts']['contract'];
 
+                $firstKey = key($contractsList);
+                if(!is_numeric($firstKey) && isset($contractsList['contractNumber'])) {
+                    $contractsList = [$contractsList];
+                }
+
                 // Assign logo for each contract
                 self::assignLogoToContracts($contractsList);
 
@@ -316,7 +321,9 @@ class PaylinePaymentGateway
         );
         foreach ($contractsList as &$contract) {
             if (!empty($contract['cardType']) && !empty($logoFileByCardType[$contract['cardType']])) {
-                $contract['logo'] = $logoFileByCardType[$contract['cardType']];
+                if(!empty($logoFileByCardType[$contract['cardType']])) {
+                    $contract['logo'] = $logoFileByCardType[$contract['cardType']];
+                }
             }
         }
     }
