@@ -1,3 +1,11 @@
+2.2.11
+===
+<h2>released on 2022-05-06</h2>
+<ul>
+<li>Use PaylineSDK v4.69</li>
+<li>Set API version to 26</li>
+</ul>
+
 2.2.10
 ===
 <h2>released on 2022-01-13</h2>
