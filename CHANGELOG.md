@@ -1,3 +1,10 @@
+2.2.12
+===
+<h2>released on 2022-07-22</h2>
+<ul>
+<li>Fix configuration with only one point of sell</li>
+</ul>
+
 2.2.11
 ===
 <h2>released on 2022-05-06</h2>
