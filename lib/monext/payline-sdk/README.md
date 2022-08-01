@@ -11,7 +11,7 @@ Usage
     use Payline\PaylineSDK;
 
     // create an instance
-    $paylineSDK = new PaylineSDK($merchant_id, $access_key, $proxy_host, $proxy_port, $proxy_login, $proxy_password, $environment[, $pathLog= null[, $logLevel = Logger::INFO[, $externalLogger = null[, $defaultTimezone = "Europe/Paris"]]]]);
+    $paylineSDK = new PaylineSDK($merchant_id,$access_key, $proxy_host, $proxy_port, $proxy_login, $proxy_password, $environment[, $pathLog= null[, $logLevel = Logger::INFO[, $externalLogger = null[, $defaultTimezone = "Europe/Paris"]]]]);
     /*
     $merchant_id, the merchant identifier, has to be a string.
     $environment determines in which Payline environment your request are targeted.
@@ -21,6 +21,11 @@ Usage
 
     // call a web service, for example doWebPayment
     $doWebPaymentRequest = array();
+
+    $doWebPaymentRequest['cancelURL'] = 'https://Demo_Shop.com/cancelURL.php'; 
+    $doWebPaymentRequest['returnURL'] = 'https://Demo_Shop.com/returnURL.php';
+    $doWebPaymentRequest['notificationURL'] = 'https://Demo_Shop.com/notificationURL.php';
+
     
     // PAYMENT
 	$doWebPaymentRequest['payment']['amount'] = 1000; // this value has to be an integer amount is sent in cents
@@ -51,9 +56,10 @@ About
 Requirements
 ------------
 
-Compliant with PHP 5.3 and over
-Requires monolog/monolog, just let Composer do the job
+Compliant with PHP 5.6 and over
+Requires monolog/monolog and symfony/cache, just let Composer do the job
 
+In order to make http call for failover, ext-curl is mark has required, it can be commented if you disable failover or set allow_url_fopen to true in php.ini (in order to use file_get_contents)
 
 Author
 ------

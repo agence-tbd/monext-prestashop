@@ -13,7 +13,7 @@ class PaylinePaymentGateway
     private static $merchantSettings = null;
 
     // API version to pass on WS call
-    const API_VERSION = 21;
+    const API_VERSION = 26;
 
     const WEB_PAYMENT_METHOD = 1;
     const RECURRING_PAYMENT_METHOD = 2;
@@ -49,6 +49,11 @@ class PaylinePaymentGateway
     {
         static $instance = null;
 
+        $pathLog = _PS_ROOT_DIR_ . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'logs' .  DIRECTORY_SEPARATOR . 'payline';
+        if (!is_dir($pathLog)) {
+            @mkdir($pathLog, 0777, true);
+        }
+
         if ($instance === null) {
             $instance =  new PaylineSDK(
                 Configuration::get('PAYLINE_MERCHANT_ID'),
@@ -58,7 +63,7 @@ class PaylinePaymentGateway
                 Configuration::get('PAYLINE_PROXY_LOGIN'),
                 Configuration::get('PAYLINE_PROXY_PASSWORD'),
                 self::getEnvMode(),
-                _PS_MODULE_DIR_ . 'payline' . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR
+                (is_dir($pathLog) ? $pathLog . DIRECTORY_SEPARATOR : _PS_ROOT_DIR_ . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR)
             );
             // Expose Payline module version for API calls
             $paylineModuleInstance = Module::getInstanceByName('payline');
