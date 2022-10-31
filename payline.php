@@ -4,7 +4,7 @@
  *
  * @author    Monext <support@payline.com>
  * @copyright Monext - http://www.payline.com
- * @version   2.2.12
+ * @version   2.2.13
  */
 
 if (!defined('_PS_VERSION_')) {
@@ -90,7 +90,7 @@ class payline extends PaymentModule
         $this->name = 'payline';
         $this->tab = 'payments_gateways';
         $this->module_key = '';
-        $this->version = '2.2.12';
+        $this->version = '2.2.13';
         $this->ps_versions_compliancy = array('min' => '1.7.1.0', 'max' => _PS_VERSION_);
         $this->author = 'Monext';
 
@@ -1442,6 +1442,7 @@ class payline extends PaymentModule
                 array( 'value' => '15', 'name' => $this->l('Toys')),
                 array( 'value' => '16', 'name' => $this->l('Animals')),
                 array( 'value' => '17', 'name' => $this->l('Food')),
+                array( 'value' => '170001', 'name' => $this->l('Food TRD eligible products')), //Allow to o use TRD contracts
                 array( 'value' => '18', 'name' => $this->l('Gifts')),
                 array( 'value' => '19', 'name' => $this->l('Shows')),
                 array( 'value' => '20', 'name' => $this->l('traveling')),

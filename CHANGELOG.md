@@ -1,3 +1,10 @@
+2.2.13
+===
+<h2>released on 2022-10-31</h2>
+<ul>
+<li>Fix TRD (send amounts with taxes)</li>
+</ul>
+
 2.2.12
 ===
 <h2>released on 2022-07-22</h2>
