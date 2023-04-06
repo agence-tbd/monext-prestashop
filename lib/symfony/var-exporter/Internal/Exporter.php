@@ -62,7 +62,7 @@ class Exporter
                     $value = self::prepare($value, $objectsPool, $refsPool, $objectsCount, $valueIsStatic);
                 }
                 goto handle_value;
-            } elseif (!\is_object($value) || $value instanceof \UnitEnum) {
+            } elseif (!\is_object($value) && !$value instanceof \__PHP_Incomplete_Class || $value instanceof \UnitEnum) {
                 goto handle_value;
             }
 
@@ -73,8 +73,8 @@ class Exporter
                 goto handle_value;
             }
 
-            $class = $value::class;
-            $reflector = Registry::$reflectors[$class] ??= Registry::getClassReflector($class);
+            $class = \get_class($value);
+            $reflector = Registry::$reflectors[$class] ?? Registry::getClassReflector($class);
 
             if ($reflector->hasMethod('__serialize')) {
                 if (!$reflector->getMethod('__serialize')->isPublic()) {
@@ -135,7 +135,7 @@ class Exporter
                 $i = 0;
                 $n = (string) $name;
                 if ('' === $n || "\0" !== $n[0]) {
-                    $c = $reflector->hasProperty($n) && ($p = $reflector->getProperty($n))->isReadOnly() ? $p->class : 'stdClass';
+                    $c = \PHP_VERSION_ID >= 80100 && $reflector->hasProperty($n) && ($p = $reflector->getProperty($n))->isReadOnly() ? $p->class : 'stdClass';
                 } elseif ('*' === $n[1]) {
                     $n = substr($n, 3);
                     $c = $reflector->getProperty($n)->class;
@@ -151,7 +151,6 @@ class Exporter
                 }
                 if (null !== $sleep) {
                     if (!isset($sleep[$n]) || ($i && $c !== $class)) {
-                        unset($arrayValue[$name]);
                         continue;
                     }
                     $sleep[$n] = false;
@@ -166,9 +165,6 @@ class Exporter
                         trigger_error(sprintf('serialize(): "%s" returned as member variable from __sleep() but does not exist', $n), \E_USER_NOTICE);
                     }
                 }
-            }
-            if (method_exists($class, '__unserialize')) {
-                $properties = $arrayValue;
             }
 
             prepare_value:
@@ -200,7 +196,7 @@ class Exporter
             case true === $value: return 'true';
             case null === $value: return 'null';
             case '' === $value: return "''";
-            case $value instanceof \UnitEnum: return '\\'.ltrim(var_export($value, true), '\\');
+            case $value instanceof \UnitEnum: return ltrim(var_export($value, true), '\\');
         }
 
         if ($value instanceof Reference) {
@@ -230,7 +226,7 @@ class Exporter
                     return substr($m[1], 0, -2);
                 }
 
-                if (str_ends_with($m[1], 'n".\'')) {
+                if ('n".\'' === substr($m[1], -4)) {
                     return substr_replace($m[1], "\n".$subIndent.".'".$m[2], -2);
                 }
 
@@ -278,7 +274,7 @@ class Exporter
             return self::exportHydrator($value, $indent, $subIndent);
         }
 
-        throw new \UnexpectedValueException(sprintf('Cannot export value of type "%s".', get_debug_type($value)));
+        throw new \UnexpectedValueException(sprintf('Cannot export value of type "%s".', \is_object($value) ? \get_class($value) : \gettype($value)));
     }
 
     private static function exportRegistry(Registry $value, string $indent, string $subIndent): string
@@ -368,7 +364,7 @@ class Exporter
             self::export($value->wakeups, $subIndent),
         ];
 
-        return '\\'.$value::class."::hydrate(\n".$subIndent.implode(",\n".$subIndent, $code)."\n".$indent.')';
+        return '\\'.\get_class($value)."::hydrate(\n".$subIndent.implode(",\n".$subIndent, $code)."\n".$indent.')';
     }
 
     /**
@@ -378,7 +374,7 @@ class Exporter
     private static function getArrayObjectProperties($value, $proto): array
     {
         $reflector = $value instanceof \ArrayIterator ? 'ArrayIterator' : 'ArrayObject';
-        $reflector = Registry::$reflectors[$reflector] ??= Registry::getClassReflector($reflector);
+        $reflector = Registry::$reflectors[$reflector] ?? Registry::getClassReflector($reflector);
 
         $properties = [
             $arrayValue = (array) $value,

@@ -80,6 +80,10 @@ class payline extends PaymentModule
     const INVALID_CART_ID = 2;
     const SUBSCRIPTION_ERROR = 3;
 
+    protected $is_eu_compatible;
+
+    protected $limited_currencies;
+
     /**
      * Module __construct
      * @since 2.0.0
@@ -90,7 +94,7 @@ class payline extends PaymentModule
         $this->name = 'payline';
         $this->tab = 'payments_gateways';
         $this->module_key = '';
-        $this->version = '2.3.0';
+        $this->version = '2.3.1';
         $this->ps_versions_compliancy = array('min' => '1.7.1.0', 'max' => _PS_VERSION_);
         $this->author = 'Monext';
 

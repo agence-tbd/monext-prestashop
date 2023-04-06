@@ -20,83 +20,134 @@ use Symfony\Contracts\Cache\CacheInterface;
  */
 class NullAdapter implements AdapterInterface, CacheInterface
 {
-    private static $createCacheItem;
+    private $createCacheItem;
 
     public function __construct()
     {
-        self::$createCacheItem ??= \Closure::bind(
-            static function ($key) {
+        $this->createCacheItem = \Closure::bind(
+            function ($key) {
                 $item = new CacheItem();
                 $item->key = $key;
                 $item->isHit = false;
 
                 return $item;
             },
-            null,
+            $this,
             CacheItem::class
         );
     }
 
-    public function get(string $key, callable $callback, float $beta = null, array &$metadata = null): mixed
+    /**
+     * {@inheritdoc}
+     */
+    public function get(string $key, callable $callback, float $beta = null, array &$metadata = null)
     {
         $save = true;
 
-        return $callback((self::$createCacheItem)($key), $save);
+        return $callback(($this->createCacheItem)($key), $save);
     }
 
-    public function getItem(mixed $key): CacheItem
+    /**
+     * {@inheritdoc}
+     */
+    public function getItem($key)
     {
-        return (self::$createCacheItem)($key);
+        $f = $this->createCacheItem;
+
+        return $f($key);
     }
 
-    public function getItems(array $keys = []): iterable
+    /**
+     * {@inheritdoc}
+     */
+    public function getItems(array $keys = [])
     {
         return $this->generateItems($keys);
     }
 
-    public function hasItem(mixed $key): bool
+    /**
+     * {@inheritdoc}
+     *
+     * @return bool
+     */
+    public function hasItem($key)
     {
         return false;
     }
 
-    public function clear(string $prefix = ''): bool
+    /**
+     * {@inheritdoc}
+     *
+     * @param string $prefix
+     *
+     * @return bool
+     */
+    public function clear(/* string $prefix = '' */)
     {
         return true;
     }
 
-    public function deleteItem(mixed $key): bool
+    /**
+     * {@inheritdoc}
+     *
+     * @return bool
+     */
+    public function deleteItem($key)
     {
         return true;
     }
 
-    public function deleteItems(array $keys): bool
+    /**
+     * {@inheritdoc}
+     *
+     * @return bool
+     */
+    public function deleteItems(array $keys)
     {
         return true;
     }
 
-    public function save(CacheItemInterface $item): bool
+    /**
+     * {@inheritdoc}
+     *
+     * @return bool
+     */
+    public function save(CacheItemInterface $item)
     {
         return true;
     }
 
-    public function saveDeferred(CacheItemInterface $item): bool
+    /**
+     * {@inheritdoc}
+     *
+     * @return bool
+     */
+    public function saveDeferred(CacheItemInterface $item)
     {
         return true;
     }
 
-    public function commit(): bool
+    /**
+     * {@inheritdoc}
+     *
+     * @return bool
+     */
+    public function commit()
     {
         return true;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function delete(string $key): bool
     {
         return $this->deleteItem($key);
     }
 
-    private function generateItems(array $keys): \Generator
+    private function generateItems(array $keys)
     {
-        $f = self::$createCacheItem;
+        $f = $this->createCacheItem;
 
         foreach ($keys as $key) {
             yield $key => $f($key);
