@@ -741,7 +741,11 @@ class PaylinePaymentGateway
         }
 
         // Sort associatedTransactionsList by date, latest first (not done by the API)
-        if (isset($result['associatedTransactionsList']) && isset($result['associatedTransactionsList']['associatedTransactions']) && is_array($result['associatedTransactionsList']['associatedTransactions'])) {
+        // Only when several transactions
+        if (!empty($result['associatedTransactionsList']['associatedTransactions'])
+            && is_array($result['associatedTransactionsList']['associatedTransactions'])
+            && empty($result['associatedTransactionsList']['associatedTransactions']['date'])
+        ) {
             uasort($result['associatedTransactionsList']['associatedTransactions'], function ($a, $b) {
                 if (self::getTimestampFromPaylineDate($a['date']) == self::getTimestampFromPaylineDate($b['date'])) {
                     return 0;
@@ -754,7 +758,11 @@ class PaylinePaymentGateway
         }
 
         // Sort statusHistoryList by date, latest first (not done by the API)
-        if (isset($result['statusHistoryList']) && isset($result['statusHistoryList']['statusHistory']) && is_array($result['statusHistoryList']['statusHistory'])) {
+        // Only when several statusHistory
+        if (!empty($result['statusHistoryList']['statusHistory'])
+            && is_array($result['statusHistoryList']['statusHistory'])
+            && empty($result['statusHistoryList']['statusHistory']['date'])
+        ) {
             uasort($result['statusHistoryList']['statusHistory'], function ($a, $b) {
                 if (self::getTimestampFromPaylineDate($a['date']) == self::getTimestampFromPaylineDate($b['date'])) {
                     return 0;
