@@ -12,8 +12,11 @@
 namespace Symfony\Component\Cache\Adapter;
 
 use Psr\Cache\CacheItemInterface;
+use Symfony\Component\Cache\CacheItem;
 use Symfony\Component\Cache\PruneableInterface;
 use Symfony\Component\Cache\ResettableInterface;
+use Symfony\Contracts\Cache\CacheInterface;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * An adapter that collects data about all cache calls.
@@ -22,20 +25,46 @@ use Symfony\Component\Cache\ResettableInterface;
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class TraceableAdapter implements AdapterInterface, PruneableInterface, ResettableInterface
+class TraceableAdapter implements AdapterInterface, CacheInterface, PruneableInterface, ResettableInterface
 {
     protected $pool;
-    private $calls = [];
+    private array $calls = [];
 
     public function __construct(AdapterInterface $pool)
     {
         $this->pool = $pool;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getItem($key)
+    public function get(string $key, callable $callback, float $beta = null, array &$metadata = null): mixed
+    {
+        if (!$this->pool instanceof CacheInterface) {
+            throw new \BadMethodCallException(sprintf('Cannot call "%s::get()": this class doesn\'t implement "%s".', get_debug_type($this->pool), CacheInterface::class));
+        }
+
+        $isHit = true;
+        $callback = function (CacheItem $item, bool &$save) use ($callback, &$isHit) {
+            $isHit = $item->isHit();
+
+            return $callback($item, $save);
+        };
+
+        $event = $this->start(__FUNCTION__);
+        try {
+            $value = $this->pool->get($key, $callback, $beta, $metadata);
+            $event->result[$key] = get_debug_type($value);
+        } finally {
+            $event->end = microtime(true);
+        }
+        if ($isHit) {
+            ++$event->hits;
+        } else {
+            ++$event->misses;
+        }
+
+        return $value;
+    }
+
+    public function getItem(mixed $key): CacheItem
     {
         $event = $this->start(__FUNCTION__);
         try {
@@ -52,10 +81,7 @@ class TraceableAdapter implements AdapterInterface, PruneableInterface, Resettab
         return $item;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function hasItem($key)
+    public function hasItem(mixed $key): bool
     {
         $event = $this->start(__FUNCTION__);
         try {
@@ -65,10 +91,7 @@ class TraceableAdapter implements AdapterInterface, PruneableInterface, Resettab
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function deleteItem($key)
+    public function deleteItem(mixed $key): bool
     {
         $event = $this->start(__FUNCTION__);
         try {
@@ -78,10 +101,7 @@ class TraceableAdapter implements AdapterInterface, PruneableInterface, Resettab
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function save(CacheItemInterface $item)
+    public function save(CacheItemInterface $item): bool
     {
         $event = $this->start(__FUNCTION__);
         try {
@@ -91,10 +111,7 @@ class TraceableAdapter implements AdapterInterface, PruneableInterface, Resettab
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function saveDeferred(CacheItemInterface $item)
+    public function saveDeferred(CacheItemInterface $item): bool
     {
         $event = $this->start(__FUNCTION__);
         try {
@@ -104,10 +121,7 @@ class TraceableAdapter implements AdapterInterface, PruneableInterface, Resettab
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getItems(array $keys = [])
+    public function getItems(array $keys = []): iterable
     {
         $event = $this->start(__FUNCTION__);
         try {
@@ -130,23 +144,21 @@ class TraceableAdapter implements AdapterInterface, PruneableInterface, Resettab
         return $f();
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function clear()
+    public function clear(string $prefix = ''): bool
     {
         $event = $this->start(__FUNCTION__);
         try {
+            if ($this->pool instanceof AdapterInterface) {
+                return $event->result = $this->pool->clear($prefix);
+            }
+
             return $event->result = $this->pool->clear();
         } finally {
             $event->end = microtime(true);
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function deleteItems(array $keys)
+    public function deleteItems(array $keys): bool
     {
         $event = $this->start(__FUNCTION__);
         $event->result['keys'] = $keys;
@@ -157,10 +169,7 @@ class TraceableAdapter implements AdapterInterface, PruneableInterface, Resettab
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function commit()
+    public function commit(): bool
     {
         $event = $this->start(__FUNCTION__);
         try {
@@ -170,10 +179,7 @@ class TraceableAdapter implements AdapterInterface, PruneableInterface, Resettab
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function prune()
+    public function prune(): bool
     {
         if (!$this->pool instanceof PruneableInterface) {
             return false;
@@ -186,16 +192,23 @@ class TraceableAdapter implements AdapterInterface, PruneableInterface, Resettab
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function reset()
     {
-        if ($this->pool instanceof ResettableInterface) {
+        if ($this->pool instanceof ResetInterface) {
             $this->pool->reset();
         }
 
         $this->clearCalls();
+    }
+
+    public function delete(string $key): bool
+    {
+        $event = $this->start(__FUNCTION__);
+        try {
+            return $event->result[$key] = $this->pool->deleteItem($key);
+        } finally {
+            $event->end = microtime(true);
+        }
     }
 
     public function getCalls()
@@ -208,7 +221,12 @@ class TraceableAdapter implements AdapterInterface, PruneableInterface, Resettab
         $this->calls = [];
     }
 
-    protected function start($name)
+    public function getPool(): AdapterInterface
+    {
+        return $this->pool;
+    }
+
+    protected function start(string $name)
     {
         $this->calls[] = $event = new TraceableAdapterEvent();
         $event->name = $name;
@@ -218,12 +236,15 @@ class TraceableAdapter implements AdapterInterface, PruneableInterface, Resettab
     }
 }
 
+/**
+ * @internal
+ */
 class TraceableAdapterEvent
 {
-    public $name;
-    public $start;
-    public $end;
-    public $result;
-    public $hits = 0;
-    public $misses = 0;
+    public string $name;
+    public float $start;
+    public float $end;
+    public array|bool $result;
+    public int $hits = 0;
+    public int $misses = 0;
 }

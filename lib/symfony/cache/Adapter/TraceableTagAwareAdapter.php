@@ -11,20 +11,19 @@
 
 namespace Symfony\Component\Cache\Adapter;
 
+use Symfony\Contracts\Cache\TagAwareCacheInterface;
+
 /**
  * @author Robin Chalas <robin.chalas@gmail.com>
  */
-class TraceableTagAwareAdapter extends TraceableAdapter implements TagAwareAdapterInterface
+class TraceableTagAwareAdapter extends TraceableAdapter implements TagAwareAdapterInterface, TagAwareCacheInterface
 {
     public function __construct(TagAwareAdapterInterface $pool)
     {
         parent::__construct($pool);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function invalidateTags(array $tags)
+    public function invalidateTags(array $tags): bool
     {
         $event = $this->start(__FUNCTION__);
         try {

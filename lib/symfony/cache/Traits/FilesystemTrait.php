@@ -12,6 +12,7 @@
 namespace Symfony\Component\Cache\Traits;
 
 use Symfony\Component\Cache\Exception\CacheException;
+use Symfony\Component\Cache\Marshaller\MarshallerInterface;
 
 /**
  * @author Nicolas Grekas <p@tchwork.com>
@@ -23,16 +24,15 @@ trait FilesystemTrait
 {
     use FilesystemCommonTrait;
 
-    /**
-     * @return bool
-     */
-    public function prune()
+    private MarshallerInterface $marshaller;
+
+    public function prune(): bool
     {
         $time = time();
         $pruned = true;
 
-        foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($this->directory, \FilesystemIterator::SKIP_DOTS), \RecursiveIteratorIterator::LEAVES_ONLY) as $file) {
-            if (!$h = @fopen($file, 'rb')) {
+        foreach ($this->scanHashDir($this->directory) as $file) {
+            if (!$h = @fopen($file, 'r')) {
                 continue;
             }
 
@@ -47,17 +47,14 @@ trait FilesystemTrait
         return $pruned;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function doFetch(array $ids)
+    protected function doFetch(array $ids): iterable
     {
         $values = [];
         $now = time();
 
         foreach ($ids as $id) {
             $file = $this->getFile($id);
-            if (!file_exists($file) || !$h = @fopen($file, 'rb')) {
+            if (!is_file($file) || !$h = @fopen($file, 'r')) {
                 continue;
             }
             if (($expiresAt = (int) fgets($h)) && $now >= $expiresAt) {
@@ -68,7 +65,7 @@ trait FilesystemTrait
                 $value = stream_get_contents($h);
                 fclose($h);
                 if ($i === $id) {
-                    $values[$id] = parent::unserialize($value);
+                    $values[$id] = $this->marshaller->unmarshall($value);
                 }
             }
         }
@@ -76,32 +73,41 @@ trait FilesystemTrait
         return $values;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function doHave($id)
+    protected function doHave(string $id): bool
     {
         $file = $this->getFile($id);
 
-        return file_exists($file) && (@filemtime($file) > time() || $this->doFetch([$id]));
+        return is_file($file) && (@filemtime($file) > time() || $this->doFetch([$id]));
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function doSave(array $values, $lifetime)
+    protected function doSave(array $values, int $lifetime): array|bool
     {
-        $ok = true;
         $expiresAt = $lifetime ? (time() + $lifetime) : 0;
+        $values = $this->marshaller->marshall($values, $failed);
 
         foreach ($values as $id => $value) {
-            $ok = $this->write($this->getFile($id, true), $expiresAt."\n".rawurlencode($id)."\n".serialize($value), $expiresAt) && $ok;
+            if (!$this->write($this->getFile($id, true), $expiresAt."\n".rawurlencode($id)."\n".$value, $expiresAt)) {
+                $failed[] = $id;
+            }
         }
 
-        if (!$ok && !is_writable($this->directory)) {
+        if ($failed && !is_writable($this->directory)) {
             throw new CacheException(sprintf('Cache directory is not writable (%s).', $this->directory));
         }
 
-        return $ok;
+        return $failed;
+    }
+
+    private function getFileKey(string $file): string
+    {
+        if (!$h = @fopen($file, 'r')) {
+            return '';
+        }
+
+        fgets($h); // expiry
+        $encodedKey = fgets($h);
+        fclose($h);
+
+        return rawurldecode(rtrim($encodedKey));
     }
 }

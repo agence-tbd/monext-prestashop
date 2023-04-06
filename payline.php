@@ -4,7 +4,7 @@
  *
  * @author    Monext <support@payline.com>
  * @copyright Monext - http://www.payline.com
- * @version   2.2.13
+ * @version   2.3.0
  */
 
 if (!defined('_PS_VERSION_')) {
@@ -90,7 +90,7 @@ class payline extends PaymentModule
         $this->name = 'payline';
         $this->tab = 'payments_gateways';
         $this->module_key = '';
-        $this->version = '2.2.13';
+        $this->version = '2.3.0';
         $this->ps_versions_compliancy = array('min' => '1.7.1.0', 'max' => _PS_VERSION_);
         $this->author = 'Monext';
 
@@ -286,13 +286,11 @@ class payline extends PaymentModule
     public function hookDisplayBackOfficeHeader()
     {
         if (Tools::getValue('configure') == $this->name || Tools::getValue('module_name') == $this->name) {
-            $this->context->controller->addJquery();
             $this->context->controller->addJqueryUi('ui.sortable');
             $this->context->controller->addJS($this->_path.'views/js/back.js');
             $this->context->controller->addCSS($this->_path.'views/css/back.css');
         }
         if (Tools::getValue('controller') == 'AdminOrders' && Tools::getValue('id_order')) {
-            $this->context->controller->addJquery();
             $this->context->controller->addJS($this->_path.'views/js/order.js');
         }
         if (Tools::getValue('controller') == 'AdminOrders' && Tools::getValue('id_order') && Tools::getValue('paylineCapture')) {
@@ -687,7 +685,7 @@ class payline extends PaymentModule
 
         $order = new Order($params['object']->id_order);
         $amountToRefund = (float)$params['object']->total_products_tax_incl + (float)$params['object']->total_shipping_tax_incl;
-        
+
         if (Context::getContext()->employee->isLoggedBack()
             && Validate::isLoadedObject($order)
             && $order->module == $this->name
@@ -1600,7 +1598,7 @@ class payline extends PaymentModule
     protected function getConfigForm($tabName)
     {
         $paylineCheckCredentials = PaylinePaymentGateway::checkCredentials();
-        
+
         if ($tabName == 'payline') {
             return array(
                 'form' => array(
@@ -2115,7 +2113,7 @@ class payline extends PaymentModule
             $currentPos = Configuration::get('PAYLINE_POS');
             $contractsList = array();
             $enabledContracts = array();
-            
+
             $enabledFallbackContracts = array();
             $fallbackContractsList = array();
             if (!empty($currentPos)) {
@@ -2344,14 +2342,14 @@ class payline extends PaymentModule
             foreach (array_keys($form_values) as $key) {
                 if ($key == 'PAYLINE_CONTRACTS' || $key == 'PAYLINE_ALT_CONTRACTS') {
                     $jsonData = Tools::getValue($key);
-                    $jsonData = Tools::jsonDecode($jsonData);
+                    $jsonData = json_decode($jsonData);
                     $contractsList = array();
                     foreach ($jsonData as $val) {
                         if ($val != '') {
                             $contractsList[] = $val;
                         }
                     }
-                    $newValue = Tools::jsonEncode($contractsList);
+                    $newValue = json_encode($contractsList);
                 } elseif ($key == 'PAYLINE_SUBSCRIBE_PLIST') {
                     $newValue = ltrim(rtrim(trim(Tools::getValue($key)), ','), ',');
                     $newValue = implode(',', array_map('intval', explode(',', $newValue)));
@@ -2497,7 +2495,7 @@ class payline extends PaymentModule
             // Web payment
             $totalAmountToPay = (float)Tools::ps_round((float)$cart->getOrderTotal(true, Cart::BOTH), 2);
         }
-        
+
         if ($checkAmountToPay && number_format($totalAmountToPay, _PS_PRICE_COMPUTE_PRECISION_) != number_format($totalAmountPaid, _PS_PRICE_COMPUTE_PRECISION_)) {
             // Wrong amount paid, do not create order
             PrestaShopLogger::addLog('payline::createOrder - amount mismatch : topay='.number_format($totalAmountToPay, _PS_PRICE_COMPUTE_PRECISION_).', paid='.number_format($totalAmountPaid, _PS_PRICE_COMPUTE_PRECISION_), 1, null, 'Cart', $cart->id);
@@ -2708,7 +2706,7 @@ class payline extends PaymentModule
                 // Check if cart exists
                 $cart = new Cart($idCart);
                 if (!Validate::isLoadedObject($cart)) {
-                    die(Tools::jsonEncode(array(
+                    die(json_encode(array(
                         'result' => $validateOrderResult,
                         'error' => 'Invalid Cart ID #'.$idCart.' - Cart does not exists',
                     )));
@@ -2725,7 +2723,7 @@ class payline extends PaymentModule
                         $errorCode = payline::SUBSCRIPTION_ERROR;
                         // Cancel the previous transaction
                         $cancelTransactionResult = PaylinePaymentGateway::cancelTransaction($paymentInfos, $this->l('Error: automatic cancel (cannot create subscription)'));
-                        die(Tools::jsonEncode(array(
+                        die(json_encode(array(
                             'result' => $validateOrderResult,
                             'error' => 'Unable to create subscription',
                             'errorCode' => $subscriptionRequest['result']['code'],
@@ -2737,7 +2735,7 @@ class payline extends PaymentModule
                 }
             } else {
                 // Refused payment, or any other error case (customer case)
-                die(Tools::jsonEncode(array(
+                die(json_encode(array(
                     'result' => $validateOrderResult,
                     'error' => 'Transaction was not approved, or any other error case (customer case)',
                     'errorCode' => $paymentInfos['result']['code'],
@@ -2746,7 +2744,7 @@ class payline extends PaymentModule
             if (ob_get_length() > 0) {
                 ob_clean();
             }
-            die(Tools::jsonEncode(array('result' => $validateOrderResult)));
+            die(json_encode(array('result' => $validateOrderResult)));
         }
     }
 
@@ -2772,28 +2770,28 @@ class payline extends PaymentModule
                 // Check if cart exists
                 $cart = new Cart($idCart);
                 if (!Validate::isLoadedObject($cart)) {
-                    die(Tools::jsonEncode(array(
+                    die(json_encode(array(
                         'result' => $validateOrderResult,
                         'error' => 'Invalid Cart ID #'.$idCart.' - Cart does not exists',
                     )));
                 }
                 // Check secure_key and id_customer on the cart, compare it to the transaction
                 if ($cart->secure_key != $transaction['formatedPrivateDataList']['secure_key'] || $cart->id_customer != $transaction['formatedPrivateDataList']['id_customer']) {
-                    die(Tools::jsonEncode(array(
+                    die(json_encode(array(
                         'result' => $validateOrderResult,
                         'error' => 'Transaction is not linked to the right Customer for Cart ID #'.$idCart,
                     )));
                 }
                 // Check that the transaction have at least one statusHistoryList items
                 if (!isset($transaction['statusHistoryList']) || !is_array($transaction['statusHistoryList']) || !sizeof($transaction['statusHistoryList'])) {
-                    die(Tools::jsonEncode(array(
+                    die(json_encode(array(
                         'result' => $validateOrderResult,
                         'error' => 'Transaction does not contains any statusHistoryList item',
                     )));
                 }
                 // Check that the transaction have at least one statusHistory items
                 if (!isset($transaction['statusHistoryList']['statusHistory']) || !is_array($transaction['statusHistoryList']['statusHistory']) || !sizeof($transaction['statusHistoryList']['statusHistory'])) {
-                    die(Tools::jsonEncode(array(
+                    die(json_encode(array(
                         'result' => $validateOrderResult,
                         'error' => 'Transaction does not contains any statusHistory item',
                     )));
@@ -2806,7 +2804,7 @@ class payline extends PaymentModule
                 $orderExists = $cart->OrderExists();
                 if (!$orderExists) {
                     // There is no order for this cart
-                    die(Tools::jsonEncode(array(
+                    die(json_encode(array(
                         'result' => $validateOrderResult,
                         'error' => 'Invalid Cart ID #'.$idCart.' - Order does not exists',
                     )));
@@ -2852,7 +2850,7 @@ class payline extends PaymentModule
         if (ob_get_length() > 0) {
             ob_clean();
         }
-        die(Tools::jsonEncode(array('result' => $validateOrderResult)));
+        die(json_encode(array('result' => $validateOrderResult)));
     }
 
     /**
@@ -2871,7 +2869,7 @@ class payline extends PaymentModule
             // Get payment record
             $paymentRecord = PaylinePaymentGateway::getPaymentRecord($transaction['payment']['contractNumber'], $paymentRecordId);
             if (!PaylinePaymentGateway::isValidResponse($paymentRecord, array('02500'))) {
-                die(Tools::jsonEncode(array(
+                die(json_encode(array(
                     'result' => $notificationResult,
                     'error' => 'Invalid paymentRecord response',
                 )));
@@ -2889,7 +2887,7 @@ class payline extends PaymentModule
             // Check if cart exists
             $cart = new Cart($idCart);
             if (!Validate::isLoadedObject($cart)) {
-                die(Tools::jsonEncode(array(
+                die(json_encode(array(
                     'result' => $notificationResult,
                     'error' => 'Invalid Cart ID #'.$idCart.' - Cart does not exists',
                 )));
@@ -2902,7 +2900,7 @@ class payline extends PaymentModule
                 // OK we can process the order via customer return
                 // Check secure_key and id_customer on the cart, compare it to the transaction
                 if ($cart->secure_key != $transaction['formatedPrivateDataList']['secure_key'] || $cart->id_customer != $transaction['formatedPrivateDataList']['id_customer']) {
-                    die(Tools::jsonEncode(array(
+                    die(json_encode(array(
                         'result' => $notificationResult,
                         'error' => 'Transaction is not linked to the right Customer for Cart ID #'.$idCart,
                     )));
@@ -2916,7 +2914,7 @@ class payline extends PaymentModule
             $orderExists = $cart->OrderExists();
             if (!$orderExists) {
                 // There is no order for this cart
-                die(Tools::jsonEncode(array(
+                die(json_encode(array(
                     'result' => $notificationResult,
                     'error' => 'Invalid Cart ID #'.$idCart.' - Order does not exists',
                 )));
@@ -2998,7 +2996,7 @@ class payline extends PaymentModule
         if (ob_get_length() > 0) {
             ob_clean();
         }
-        die(Tools::jsonEncode(array('result' => $notificationResult)));
+        die(json_encode(array('result' => $notificationResult)));
     }
 
     /**
@@ -3019,7 +3017,7 @@ class payline extends PaymentModule
                 // Get payment record
                 $paymentRecord = PaylinePaymentGateway::getPaymentRecord($transaction['payment']['contractNumber'], $paymentRecordId);
                 if (!PaylinePaymentGateway::isValidResponse($paymentRecord, array('02500'))) {
-                    die(Tools::jsonEncode(array(
+                    die(json_encode(array(
                         'result' => $notificationResult,
                         'error' => 'Invalid paymentRecord response',
                     )));
@@ -3028,7 +3026,7 @@ class payline extends PaymentModule
                 // Check if an order has already been created for this transaction id
                 $idOrder = PaylineToken::getIdOrderByIdTransaction($transaction['transaction']['id']);
                 if (!empty($idOrder)) {
-                    die(Tools::jsonEncode(array(
+                    die(json_encode(array(
                         'result' => false,
                         'error' => 'An order already exists for transaction ' . $transaction['transaction']['id'],
                     )));
@@ -3043,7 +3041,7 @@ class payline extends PaymentModule
                 // Check if cart original exists
                 $cart = new Cart($idCart);
                 if (!Validate::isLoadedObject($cart)) {
-                    die(Tools::jsonEncode(array(
+                    die(json_encode(array(
                         'result' => $notificationResult,
                         'error' => 'Invalid Cart ID #'.$idCart.' - Cart does not exists',
                     )));
@@ -3056,7 +3054,7 @@ class payline extends PaymentModule
                 $orderExists = $cart->OrderExists();
                 if (!$orderExists) {
                     // There is no order for this cart
-                    die(Tools::jsonEncode(array(
+                    die(json_encode(array(
                         'result' => $notificationResult,
                         'error' => 'Invalid Cart ID #'.$idCart.' - Original order does not exists',
                     )));
@@ -3079,7 +3077,7 @@ class payline extends PaymentModule
         if (ob_get_length() > 0) {
             ob_clean();
         }
-        die(Tools::jsonEncode(array('result' => $notificationResult)));
+        die(json_encode(array('result' => $notificationResult)));
     }
 
     /**

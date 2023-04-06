@@ -23,7 +23,7 @@
 	</ol>
 {/if}
 
-<div 
+<div
 	id="PaylineWidget"
 	data-auto-init="false"
 	data-token="{$payline_token}"
