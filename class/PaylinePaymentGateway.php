@@ -116,8 +116,13 @@ class PaylinePaymentGateway
             // Get merchant settings
             $merchantSettings = self::getInstance()->getMerchantSettings(array());
 
+
+
+
+
             $result = (is_array($merchantSettings) && !empty($merchantSettings['result']) && self::isValidResponse($merchantSettings));
             if ($result) {
+
                 self::$merchantSettings = $merchantSettings;
             }
         }
@@ -164,6 +169,13 @@ class PaylinePaymentGateway
         }
 
         if (self::checkCredentials() && isset(self::$merchantSettings['listPointOfSell']) && is_array(self::$merchantSettings['listPointOfSell']) && isset(self::$merchantSettings['listPointOfSell']['pointOfSell']) && is_array(self::$merchantSettings['listPointOfSell']['pointOfSell'])) {
+
+            $pointOfSell = self::$merchantSettings['listPointOfSell']['pointOfSell'];
+            //Case with only one POS
+            if(!empty($pointOfSell['label']) && isset($pointOfSell['contracts'])) {
+                self::$merchantSettings['listPointOfSell']['pointOfSell'] = array($pointOfSell);
+            }
+
             // Save POS in cache
             Configuration::updateValue('PAYLINE_POS_CACHE', base64_encode(Tools::jsonEncode(self::$merchantSettings['listPointOfSell']['pointOfSell'])));
             return self::$merchantSettings['listPointOfSell']['pointOfSell'];
