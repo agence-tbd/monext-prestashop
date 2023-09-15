@@ -266,6 +266,7 @@ class PaylinePaymentGateway
     {
         $logoFileByCardType = array(
             '3XCB' => '3xcb.png',
+            'ONEY' => 'oney.png',
             '3XONEY' => '3xoney.png',
             '1EURO' => '1euro.png',
             '1EURO.COM' => '1euro.png',
@@ -334,7 +335,8 @@ class PaylinePaymentGateway
             'VISAPREPAID' => 'visaprepaid.png',
             'FCB3X' => 'fcb3x.png',
             'FCB4X' => 'fcb4x.png',
-            'PRESTO' => 'presto.png'
+            'PRESTO' => 'presto.png',
+            'TRD' => 'trd.png'
         );
         foreach ($contractsList as &$contract) {
             if (!empty($contract['cardType']) && !empty($logoFileByCardType[$contract['cardType']])) {
@@ -412,7 +414,7 @@ class PaylinePaymentGateway
             'order' => array(
                 'ref' => 'cart' . (int)$context->cart->id . (!empty($context->cookie->pl_try) ? 'try' . $context->cookie->pl_try : ''),
                 'country' => $invoiceCountry->iso_code,
-                'amount' => round($orderTotal * 100),
+                'amount' => round($orderTotalWt * 100),
                 'taxes' => round($orderTaxes * 100),
                 'date' => date('d/m/Y H:i'),
                 'currency' => $context->currency->iso_code_num,
@@ -478,7 +480,7 @@ class PaylinePaymentGateway
         foreach ($context->cart->getProducts() as $cartProduct) {
             $instance->addOrderDetail(array(
                 'ref' => (string)$cartProduct['reference'],
-                'price' => round((float)$cartProduct['price'] * 100),
+                'price' => round((float)(isset($cartProduct['price_wt']) ? $cartProduct['price_wt'] : $cartProduct['price']) * 100),
                 'quantity' => (int)$cartProduct['cart_quantity'],
                 'comment' => (string)$cartProduct['name'],
                 'category' =>  $defaultCategory,
