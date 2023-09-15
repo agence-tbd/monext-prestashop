@@ -12,7 +12,7 @@
 namespace Symfony\Component\Cache\Traits;
 
 use Symfony\Component\Cache\PruneableInterface;
-use Symfony\Component\Cache\ResettableInterface;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * @author Nicolas Grekas <p@tchwork.com>
@@ -21,22 +21,16 @@ use Symfony\Component\Cache\ResettableInterface;
  */
 trait ProxyTrait
 {
-    private $pool;
+    private object $pool;
 
-    /**
-     * {@inheritdoc}
-     */
-    public function prune()
+    public function prune(): bool
     {
         return $this->pool instanceof PruneableInterface && $this->pool->prune();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function reset()
     {
-        if ($this->pool instanceof ResettableInterface) {
+        if ($this->pool instanceof ResetInterface) {
             $this->pool->reset();
         }
     }

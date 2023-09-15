@@ -1,10 +1,12 @@
 {
+    "name": "prestashop/payline",
+    "description": "PrestaShop module payline",
     "config": {
-        "vendor-dir": "lib"
+        "vendor-dir": "lib",
+        "prepend-autoloader": false
     },
     "require" : {
-        "php" : ">=5.3.0",
-        "monolog/monolog" : "1.*",
         "monext/payline-sdk" : "4.*"
-    }
+    },
+    "type": "prestashop-module"
 }

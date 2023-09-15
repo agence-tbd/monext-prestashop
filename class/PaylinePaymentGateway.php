@@ -164,7 +164,7 @@ class PaylinePaymentGateway
         if ($useCache) {
             $posCache = Configuration::get('PAYLINE_POS_CACHE');
             if (!empty($posCache)) {
-                return Tools::jsonDecode(base64_decode($posCache), true);
+                return json_decode(base64_decode($posCache), true);
             }
         }
 
@@ -177,7 +177,7 @@ class PaylinePaymentGateway
             }
 
             // Save POS in cache
-            Configuration::updateValue('PAYLINE_POS_CACHE', base64_encode(Tools::jsonEncode(self::$merchantSettings['listPointOfSell']['pointOfSell'])));
+            Configuration::updateValue('PAYLINE_POS_CACHE', base64_encode(json_encode(self::$merchantSettings['listPointOfSell']['pointOfSell'])));
             return self::$merchantSettings['listPointOfSell']['pointOfSell'];
         }
 
@@ -339,6 +339,7 @@ class PaylinePaymentGateway
             'TRD' => 'trd.png'
         );
         foreach ($contractsList as &$contract) {
+            $contract['logo'] = '';
             if (!empty($contract['cardType']) && !empty($logoFileByCardType[$contract['cardType']])) {
                 if(!empty($logoFileByCardType[$contract['cardType']])) {
                     $contract['logo'] = $logoFileByCardType[$contract['cardType']];
@@ -604,7 +605,7 @@ class PaylinePaymentGateway
         $waitPeriod = (int)Configuration::get('PAYLINE_SUBSCRIBE_START_DATE') + 1;
         // Remove 1 billing because we've already done it into CPT mode
         $billingLeft = (Configuration::get('PAYLINE_SUBSCRIBE_NUMBER') > 1 ? ((int)Configuration::get('PAYLINE_SUBSCRIBE_NUMBER') - 1) : null);
-        
+
         switch ($subscribePeriodicity) {
             case 10:
                 // Daily
@@ -740,7 +741,11 @@ class PaylinePaymentGateway
         }
 
         // Sort associatedTransactionsList by date, latest first (not done by the API)
-        if (isset($result['associatedTransactionsList']) && isset($result['associatedTransactionsList']['associatedTransactions']) && is_array($result['associatedTransactionsList']['associatedTransactions'])) {
+        // Only when several transactions
+        if (!empty($result['associatedTransactionsList']['associatedTransactions'])
+            && is_array($result['associatedTransactionsList']['associatedTransactions'])
+            && empty($result['associatedTransactionsList']['associatedTransactions']['date'])
+        ) {
             uasort($result['associatedTransactionsList']['associatedTransactions'], function ($a, $b) {
                 if (self::getTimestampFromPaylineDate($a['date']) == self::getTimestampFromPaylineDate($b['date'])) {
                     return 0;
@@ -753,7 +758,11 @@ class PaylinePaymentGateway
         }
 
         // Sort statusHistoryList by date, latest first (not done by the API)
-        if (isset($result['statusHistoryList']) && isset($result['statusHistoryList']['statusHistory']) && is_array($result['statusHistoryList']['statusHistory'])) {
+        // Only when several statusHistory
+        if (!empty($result['statusHistoryList']['statusHistory'])
+            && is_array($result['statusHistoryList']['statusHistory'])
+            && empty($result['statusHistoryList']['statusHistory']['date'])
+        ) {
             uasort($result['statusHistoryList']['statusHistory'], function ($a, $b) {
                 if (self::getTimestampFromPaylineDate($a['date']) == self::getTimestampFromPaylineDate($b['date'])) {
                     return 0;

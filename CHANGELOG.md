@@ -1,3 +1,10 @@
+2.3.0
+===
+<h2>released on 2023-04-04</h2>
+<ul>
+<li>Compatibility with prestashop 8.0.x</li>
+</ul>
+
 2.2.13
 ===
 <h2>released on 2022-10-31</h2>
