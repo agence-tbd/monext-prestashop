@@ -764,6 +764,30 @@ class payline extends PaymentModule
     }
 
     /**
+     * Sets order status to "Refunded" if all products are refunded
+     * @since 2.3.1
+     * @param $params
+     * @return void
+     */
+    public function hookActionObjectOrderDetailUpdateAfter($params)
+    {
+        $order = new Order($params['object']->id_order);
+        $products = $order->getProducts(false, false, false, false);
+        $totalRefund = array();
+        foreach ($products as $product) {
+            $totalRefund[$product['product_id']] = $product['product_quantity_refunded'] >= $product['product_quantity'];
+        }
+
+        //Set State REFUND IF all product are refunds
+        if(!in_array(false, $totalRefund)) {
+            $history = new OrderHistory();
+            $history->id_order = (int)$order->id;
+            $history->changeIdOrderState(_PS_OS_REFUND_, (int)$order->id);
+            $history->addWithemail();
+        }
+    }
+
+    /**
      * Display payment result on confirmation page
      * @since 2.0.0
      * @param string $params
