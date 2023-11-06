@@ -751,14 +751,20 @@ class payline extends PaymentModule
                     } else {
                         // Refund NOK
                         $errors = PaylinePaymentGateway::getErrorResponse($refund);
-                        $this->context->controller->errors[] = sprintf($this->l('Unable to process the refund, Payline reported the following error: “%s“ (code %s)'), $errors['longMessage'], $errors['code']);
+                        $errorsMessage = sprintf($this->l('Unable to process the refund, Payline reported the following error: “%s“ (code %s)'), $errors['longMessage'], $errors['code']);
+                        $this->context->controller->errors[] = $errorsMessage;
+                        throw new Exception($errorsMessage);
                     }
                 } else {
                     $errors = PaylinePaymentGateway::getErrorResponse($transaction);
-                    $this->context->controller->errors[] = sprintf($this->l('Unable to process the refund, Payline reported the following error: “%s“ (code %s)'), $errors['longMessage'], $errors['code']);
+                    $errorsMessage = sprintf($this->l('Unable to process the refund, Payline reported the following error: “%s“ (code %s)'), $errors['longMessage'], $errors['code']);
+                    $this->context->controller->errors[] = $errorsMessage;
+                    throw new Exception($errorsMessage);
                 }
             } else {
-                $this->context->controller->errors[] = $this->l('Unable to find any Payline transaction ID on this order');
+                $errorsMessage = $this->l('Unable to find any Payline transaction ID on this order');
+                $this->context->controller->errors[] = $errorsMessage;
+                throw new Exception($errorsMessage);
             }
         }
     }
