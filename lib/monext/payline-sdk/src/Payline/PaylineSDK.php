@@ -9,6 +9,7 @@
  */
 namespace Payline;
 
+
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use SoapClient;
@@ -46,7 +47,7 @@ class PaylineSDK
      * Payline release corresponding to this version of the package
      * @see https://docs.payline.com/display/DT/API+version+history
      */
-    const SDK_RELEASE = 'PHP SDK 4.73';
+    const SDK_RELEASE = 'PHP SDK 4.74';
 
     /**
      * development environment flag
@@ -257,8 +258,16 @@ class PaylineSDK
      * error code/shortMessage returned when Payline can't be reached
      */
     const ERR_CODE = 'XXXXX';
+
     const ERR_SHORT_MESSAGE = 'ERROR';
 
+
+    /**
+     * monext endpoint webservice url
+     * @var string
+     */
+    protected $webServicesEndpoint;
+    
     /**
      * @var Logger
      */
@@ -284,6 +293,7 @@ class PaylineSDK
      * array containing private data
      */
     protected $privateData;
+
 
     /**
      * array containing parent-child nodes associations
@@ -407,8 +417,14 @@ class PaylineSDK
         }
 
         $this->loggerPath = $pathLog . $logfileDate . '.log';
-
+        try {
+            if(is_writable($pathLog) || is_writable(dirname($pathLog))) {
         $this->logger->pushHandler(new StreamHandler($this->loggerPath, $logLevel)); // set default log folder
+            }
+        } catch (\Exception $e) {
+            $this->loggerPath = null;
+            //No logger can be used
+        }
 
         $this->logger->info('__construct', array(
             'merchant_id' => $this->hideChars($merchant_id, 6, 1),
@@ -643,7 +659,7 @@ class PaylineSDK
      *
      * @param array $array
      *            the array keys are listed in Wallet CLASS.
-     * @param array $address
+     * @param array $shippingAddress
      *            the array keys are listed in Address CLASS.
      * @param array $card
      *            the array keys are listed in Card CLASS.
@@ -651,13 +667,9 @@ class PaylineSDK
      */
     protected function wallet(array $array, array $shippingAddress = array(), array $card = array())
     {
-
-        $buyerArray = !empty($array['buyer']) ? $array['buyer'] : $array;
-        $shippingAddress = !empty($array['shippingAddress']) ? $array['shippingAddress'] : $shippingAddress;
         $card = !empty($array['card']) ? $array['card'] : $card;
 
         $wallet = $this->fillObject($array, new Wallet());
-//        $wallet->shippingAddress = $this->address($shippingAddress);
         $wallet->card = $this->card($card);
         return new \SoapVar($wallet, SOAP_ENC_OBJECT, self::SOAP_WALLET, SoapVarFactory::PAYLINE_NAMESPACE);
     }
@@ -835,19 +847,19 @@ class PaylineSDK
         if (!isset($array['bankAccountData'])) {
             $array['bankAccountData'] = array();
         }
-        if (!isset($array['cancelURL']) || !strlen($array['cancelURL'])) {
+        if (empty($array['cancelURL'])) {
             $array['cancelURL'] = null;
         }
-        if (!isset($array['notificationURL']) || !strlen($array['notificationURL'])) {
+        if (empty($array['notificationURL'])) {
             $array['notificationURL'] = null;
         }
-        if (!isset($array['returnURL']) || !strlen($array['returnURL'])) {
+        if (empty($array['returnURL'])) {
             $array['returnURL'] = null;
         }
-        if (!isset($array['languageCode']) || !strlen($array['languageCode'])) {
+        if (empty($array['languageCode'])) {
             $array['languageCode'] = null;
         }
-        if (!isset($array['securityMode']) || !strlen($array['securityMode'])) {
+        if (empty($array['securityMode'])) {
             $array['securityMode'] = null;
         }
 
@@ -901,31 +913,31 @@ class PaylineSDK
             $array['owner']['billingAddress'] = $array['ownerAddress'];
         }
 
-        if (!isset($array['selectedContractList']) || !strlen($array['selectedContractList'][0]) || !is_array($array['selectedContractList'])) {
+        if (empty($array['selectedContractList'][0])) {
             $array['selectedContractList'] = null;
         }
-        if (!isset($array['secondSelectedContractList']) || !strlen($array['secondSelectedContractList'][0]) || !is_array($array['secondSelectedContractList'])) {
+        if (empty($array['secondSelectedContractList'][0]) || !is_array($array['secondSelectedContractList'])) {
             $array['secondSelectedContractList'] = null;
         }
-        if (!isset($array['contractNumberWalletList']) || !strlen($array['contractNumberWalletList'][0]) || !is_array($array['contractNumberWalletList'])) {
+        if (empty($array['contractNumberWalletList'][0]) || !is_array($array['contractNumberWalletList'])) {
             $array['contractNumberWalletList'] = null;
         }
-        if (!isset($array['customPaymentPageCode']) || !strlen($array['customPaymentPageCode'])) {
+        if (empty($array['customPaymentPageCode'])) {
             $array['customPaymentPageCode'] = null;
         }
-        if (!isset($array['customPaymentTemplateURL']) || !strlen($array['customPaymentTemplateURL'])) {
+        if (empty($array['customPaymentTemplateURL'])) {
             $array['customPaymentTemplateURL'] = null;
         }
         if (!isset($array['recurring'])) {
             $array['recurring'] = null;
         }
-        if (!isset($array['orderRef']) || !strlen($array['orderRef'])) {
+        if (empty($array['orderRef'])) {
             $array['orderRef'] = null;
         }
-        if (!isset($array['orderDate']) || !strlen($array['orderDate'])) {
+        if (empty($array['orderDate'])) {
             $array['orderDate'] = null;
         }
-        if (!isset($array['walletIdList']) || !strlen($array['walletIdList'][0] || !is_array($array['walletIdList']))) {
+        if (empty($array['walletIdList'][0])) {
             $array['walletIdList'] = null;
         }
         if (!isset($array['merchantName'])) {
@@ -987,11 +999,11 @@ class PaylineSDK
             $array['travelFileNumber'] = null;
         }
 
-        if (!isset($array['version']) || !strlen($array['version'])) {
+        if (empty($array['version'])) {
             $array['version'] = '';
         }
 
-        if (!isset($array['media']) || !strlen($array['media'])) {
+        if (empty($array['media'])) {
             $array['media'] = '';
         }
 
@@ -1075,7 +1087,7 @@ class PaylineSDK
 
 
     /**
-     * @param $method
+     * @param $Method
      * @return false|string
      */
     protected function getApiForMethod($Method)
@@ -1742,6 +1754,20 @@ class PaylineSDK
         return $this->webServiceRequest($array, $WSRequest, self::DIRECT_API, 'isRegistered');
     }
 
+    /**
+     * calls prepareSession web service
+     *
+     * @param array $array
+     *            associative array containing prepareSession parameters
+     */
+    public function prepareSession(array $array)
+    {
+        $this->formatRequest($array);
+        $WSRequest = array();
+
+        return $this->webServiceRequest($array, $WSRequest, self::DIRECT_API, 'prepareSession');
+    }
+
     /*
      * *************************************************************************
      * WebPaymentAPI
@@ -1768,7 +1794,7 @@ class PaylineSDK
     }
 
     /**
-     * calls doAuthorizationRedirectRequest web service
+     * calls doAuthorizationRedirect web service
      *
      * @param array $array
      *            associative array containing doAuthorizationRedirectRequest parameters
@@ -1905,6 +1931,9 @@ class PaylineSDK
     }
 
 
+
+
+
     /**
      * ************************************************************************
      * End API methods
@@ -2003,7 +2032,7 @@ class PaylineSDK
      *            decrypted message sent by getToken servlet
      * @param string $filename
      * @param string $error
-     * @param unknown $maxlength
+     * @param int $maxlength
      * @return NULL|boolean|string
      */
     public function gzdecode($data, &$filename = '', &$error = '', $maxlength = null)
@@ -2174,12 +2203,13 @@ class PaylineSDK
      * ************************************************************************
      */
 
+
     /**
      * Pretty print XML
      *
-     * @param string $xml
-     *            content of the xml file to make pretty
-     * @return boolean|string
+     * @param $xml
+     * @param $key
+     * @return void
      */
     protected function beautifulerXML(&$xml, $key) {
         if(in_array($key, array('Request', 'Response')) && $xml) {

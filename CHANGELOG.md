@@ -1,3 +1,12 @@
+2.3.1
+===
+<h2>released on 2023-09-12</h2>
+<ul>
+<li>Fix compatibility php 8.x</li>
+<li>Downgrade composer requirements</li>
+<li>Upgrade Payline SDK from v4.73 to v4.75</li>
+</ul>
+
 2.3.0
 ===
 <h2>released on 2023-04-04</h2>
