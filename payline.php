@@ -246,6 +246,7 @@ class payline extends PaymentModule
             || (version_compare(_PS_VERSION_, '1.7.0.0', '<') && !$this->registerHook('displayPayment'))
             || !$this->registerHook('paymentReturn')
             || !$this->registerHook('paymentOptions')
+            || !$this->registerHook('actionObjectOrderDetailUpdateAfter')
             // Install custom order state
             || !$this->createCustomOrderState()
             // Install tables
@@ -729,20 +730,6 @@ class payline extends PaymentModule
                             $orderInvoice = null;
                         }
 
-                        $products = $order->getProducts(false, false, false, false);
-                        $totalRefund = array();
-                        foreach ($products as $product) {
-                            $totalRefund[$product['product_id']] = $product['product_quantity_refunded'] >= $product['product_quantity'];
-                        }
-
-                        //Set State REFUND IF all product are refunds
-                        if(!in_array(false, $totalRefund)) {
-                            $history = new OrderHistory();
-                            $history->id_order = (int)$order->id;
-                            $history->changeIdOrderState(_PS_OS_REFUND_, (int)$order->id);
-                            $history->addWithemail();
-                        }
-
                         // Wait 1s because Payline API may take some time to be updated after a refund
                         sleep(1);
 
@@ -779,13 +766,15 @@ class payline extends PaymentModule
     {
         $order = new Order($params['object']->id_order);
         $products = $order->getProducts(false, false, false, false);
-        $totalRefund = array();
+        $totallyRefund = true;
         foreach ($products as $product) {
-            $totalRefund[$product['product_id']] = $product['product_quantity_refunded'] >= $product['product_quantity'];
+            if ($product['product_quantity_refunded'] < $product['product_quantity']) {
+                $totallyRefund = false;
+            }
         }
 
         //Set State REFUND IF all product are refunds
-        if(!in_array(false, $totalRefund)) {
+        if($totallyRefund) {
             $history = new OrderHistory();
             $history->id_order = (int)$order->id;
             $history->changeIdOrderState(_PS_OS_REFUND_, (int)$order->id);
