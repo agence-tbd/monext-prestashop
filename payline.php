@@ -4,7 +4,7 @@
  *
  * @author    Monext <support@payline.com>
  * @copyright Monext - http://www.payline.com
- * @version   2.3.3
+ * @version   2.3.4
  */
 
 if (!defined('_PS_VERSION_')) {
@@ -94,7 +94,7 @@ class payline extends PaymentModule
         $this->name = 'payline';
         $this->tab = 'payments_gateways';
         $this->module_key = '';
-        $this->version = '2.3.3';
+        $this->version = '2.3.4';
         $this->ps_versions_compliancy = array('min' => '1.7.1.0', 'max' => _PS_VERSION_);
         $this->author = 'Monext';
 
@@ -758,7 +758,7 @@ class payline extends PaymentModule
 
     /**
      * Sets order status to "Refunded" if all products are refunded
-     * @since 2.3.1
+     * @since 2.3.2
      * @param $params
      * @return void
      */

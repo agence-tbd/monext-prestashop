@@ -1,3 +1,12 @@
+2.3.4
+===
+<h2>released on 2023-04-11</h2>
+<ul>
+<li>Fix order status on refund</li>
+<li>Throw error on refund without discount</li>
+</ul>
+
+
 2.3.3
 ===
 <h2>released on 2024-03-27</h2>

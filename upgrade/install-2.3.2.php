@@ -10,7 +10,7 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-function upgrade_module_2_3_1($module)
+function upgrade_module_2_3_2($module)
 {
     $module->registerHook('actionObjectOrderDetailUpdateAfter');
 
