@@ -1212,6 +1212,10 @@ class payline extends PaymentModule
         if (!Configuration::get('PAYLINE_API_STATUS')) {
             return false;
         }
+        // Check if at least one contract is enabled
+        if ($paymentMethod == null && sizeof(PaylinePaymentGateway::getEnabledContracts()) == 0) {
+            return false;
+        }
         // Check if at least one payment method is available
         if ($paymentMethod == null && !Configuration::get('PAYLINE_WEB_CASH_ENABLE') && !Configuration::get('PAYLINE_RECURRING_ENABLE') && !Configuration::get('PAYLINE_SUBSCRIBE_ENABLE')) {
             return false;
