@@ -704,7 +704,15 @@ class payline extends PaymentModule
         }
 
         $order = new Order($params['object']->id_order);
-        $amountToRefund = (float)$params['object']->total_products_tax_incl + (float)$params['object']->total_shipping_tax_incl;
+
+        if (Tools::getValue('doPartialRefundPayline')
+            && Tools::getValue('doPartialRefundPaylineAmountValue') > 0
+            && Tools::getValue('doPartialRefundPaylineAmountValue') <= $order->total_paid
+        ) {
+            $amountToRefund = Tools::getValue('doPartialRefundPaylineAmountValue');
+        } else {
+            $amountToRefund = (float)$params['object']->total_products_tax_incl + (float)$params['object']->total_shipping_tax_incl;
+        }
 
         if (Context::getContext()->employee->isLoggedBack()
             && Validate::isLoadedObject($order)
@@ -3136,5 +3144,23 @@ class payline extends PaymentModule
         }
 
         return $order->addOrderPayment($amountPaid, null, $transactionId, null, $date, $invoice);
+    }
+
+    /**
+     * Display additional Payline input on Partial refund form to refund a custom amount
+     * @param $params
+     * @return string
+     */
+    public function hookDisplayAdminOrder($params)
+    {
+        $order = new Order($params['id_order']);
+        if (!Validate::isLoadedObject($order)) {
+            return '';
+        }
+
+        $this->context->smarty->assign('payline_total_paid', $order->total_paid);
+        $this->context->smarty->assign('payline_custom_amount_refund', $this->l('Payline refund online'));
+        $this->context->smarty->assign('payline_custom_amount_refund_error', $this->l('Please try to refund an amount between 0 and the total order paid'));
+        return $this->context->smarty->fetch(_PS_MODULE_DIR_ . $this->name . '/views/templates/hook/partialRefund.tpl');
     }
 }
