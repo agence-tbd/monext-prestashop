@@ -84,6 +84,8 @@ class payline extends PaymentModule
 
     protected $limited_currencies;
 
+    protected $order_already_refund;
+
     /**
      * Module __construct
      * @since 2.0.0
@@ -687,6 +689,62 @@ class payline extends PaymentModule
                 }
             }
             PaylinePaymentGateway::resetTransaction($idTransaction, $this->l('Manual reset from PrestaShop BackOffice'));
+        }elseif (!empty($params['id_order']) && !empty($params['newOrderStatus'])
+            && Validate::isLoadedObject($params['newOrderStatus'])
+            && ($params['newOrderStatus']->id == Configuration::get('PS_OS_REFUND'))
+        ) {
+            $order = new Order((int)$params['id_order']);
+
+            $orderPayments = OrderPayment::getByOrderReference($order->reference);
+            if (sizeof($orderPayments)) {
+                // Retrieve transaction ID
+                $paylineTransaction = current($orderPayments);
+                $idTransaction = $paylineTransaction->transaction_id;
+
+                $transaction = PaylinePaymentGateway::getTransactionInformations($idTransaction);
+                if (PaylinePaymentGateway::isValidResponse($transaction)) {
+                    $refund = PaylinePaymentGateway::refundTransaction($idTransaction, null, $this->l('Manual refund from PrestaShop BackOffice'));
+                    $this->order_already_refund = true;
+                    if (PaylinePaymentGateway::isValidResponse($refund)) {
+                        $order_detail_list = $order->getOrderDetailList();
+                        foreach ($order_detail_list as $order_detail) {
+                            $order_detail = new OrderDetail((int)$order_detail['id_order_detail']);
+                            $order_detail->product_quantity_refunded = $order_detail->product_quantity;
+                            $order_detail->save();
+                        }
+
+                        $customer = new Customer($order->id_customer);
+                        $customerMessage = new CustomerMessage();
+                        $idCustomerThread = CustomerThread::getIdCustomerThreadByEmailAndIdOrder($customer->email, $order->id);
+
+                        if (!$idCustomerThread) {
+                            $customerThread = new CustomerThread();
+                            $customerThread->id_contact = 0;
+                            $customerThread->id_customer = (int) $order->id_customer;
+                            $customerThread->id_shop = (int) $this->context->shop->id;
+                            $customerThread->id_order = (int) $order->id;
+                            $customerThread->id_lang = (int) $this->context->language->id;
+                            $customerThread->email = $customer->email;
+                            $customerThread->status = 'open';
+                            $customerThread->token = Tools::passwdGen(12);
+                            $customerThread->add();
+                        } else {
+                            $customerThread = new CustomerThread((int) $idCustomerThread);
+                            $customerThread->status = 'open';
+                            $customerThread->update();
+                        }
+
+                        $customerMessage->id_customer_thread = $customerThread->id;
+                        $customerMessage->id_employee = $this->context->employee->id;
+                        $customerMessage->message = $this->l('Manual refund from PrestaShop BackOffice');
+                        $customerMessage->add();
+                    } else {
+                        // Refund NOK
+                        $errors = PaylinePaymentGateway::getErrorResponse($refund);
+                        $this->context->controller->errors[] = sprintf($this->l('Unable to process the refund, Payline reported the following error: “%s“ (code %s)'), $errors['longMessage'], $errors['code']);
+                    }
+                }
+            }
         }
     }
 
@@ -772,6 +830,10 @@ class payline extends PaymentModule
      */
     public function hookActionObjectOrderDetailUpdateAfter($params)
     {
+        if(!empty($this->order_already_refund)) {
+            return;
+        }
+
         $order = new Order($params['object']->id_order);
         $products = $order->getProducts(false, false, false, false);
         $totallyRefund = true;
