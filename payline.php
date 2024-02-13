@@ -4,7 +4,7 @@
  *
  * @author    Monext <support@payline.com>
  * @copyright Monext - http://www.payline.com
- * @version   2.3.0
+ * @version   2.3.2
  */
 
 if (!defined('_PS_VERSION_')) {
@@ -94,7 +94,7 @@ class payline extends PaymentModule
         $this->name = 'payline';
         $this->tab = 'payments_gateways';
         $this->module_key = '';
-        $this->version = '2.3.1';
+        $this->version = '2.3.2';
         $this->ps_versions_compliancy = array('min' => '1.7.1.0', 'max' => _PS_VERSION_);
         $this->author = 'Monext';
 
@@ -671,6 +671,21 @@ class payline extends PaymentModule
                 // Process capture of a specific transaction
                 $this->processTransactionCapture($order, $idTransaction, false);
             }
+        }elseif (!empty($params['id_order']) && !empty($params['newOrderStatus'])
+            && Validate::isLoadedObject($params['newOrderStatus'])
+            && ($params['newOrderStatus']->id == Configuration::get('PS_OS_CANCELED'))
+        ) {
+            $idTransaction = null;
+            $order = new Order((int)$params['id_order']);
+            if (Validate::isLoadedObject($order)) {
+                $orderPayments = OrderPayment::getByOrderReference($order->reference);
+                if (sizeof($orderPayments)) {
+                    // Retrieve transaction ID
+                    $paylineTransaction = current($orderPayments);
+                    $idTransaction = $paylineTransaction->transaction_id;
+                }
+            }
+            PaylinePaymentGateway::resetTransaction($idTransaction, $this->l('Manual reset from PrestaShop BackOffice'));
         }
     }
 
@@ -1210,6 +1225,10 @@ class payline extends PaymentModule
         }
         // Check for module and API state
         if (!Configuration::get('PAYLINE_API_STATUS')) {
+            return false;
+        }
+        // Check if at least one contract is enabled
+        if ($paymentMethod == null && sizeof(PaylinePaymentGateway::getEnabledContracts()) == 0) {
             return false;
         }
         // Check if at least one payment method is available
@@ -2239,7 +2258,7 @@ class payline extends PaymentModule
                 'PAYLINE_WEB_CASH_TITLE' => $this->getConfigLangValue('PAYLINE_WEB_CASH_TITLE'),
                 'PAYLINE_WEB_CASH_SUBTITLE' => $this->getConfigLangValue('PAYLINE_WEB_CASH_SUBTITLE'),
                 'PAYLINE_WEB_CASH_ACTION' => Configuration::get('PAYLINE_WEB_CASH_ACTION'),
-                'PAYLINE_WEB_CASH_VALIDATION' => Configuration::get('PAYLINE_WEB_CASH_VALIDATION'),
+                'PAYLINE_WEB_CASH_VALIDATION' => Configuration::get('PAYLINE_WEB_CASH_VALIDATION') ?: Configuration::get('PS_OS_PAYMENT'), //Default value if not set
                 'PAYLINE_WEB_CASH_BY_WALLET' => Configuration::get('PAYLINE_WEB_CASH_BY_WALLET'),
                 'PAYLINE_WEB_CASH_UX' => Configuration::get('PAYLINE_WEB_CASH_UX'),
                 'PAYLINE_WEB_CASH_CUSTOM_CODE' => Configuration::get('PAYLINE_WEB_CASH_CUSTOM_CODE'),
