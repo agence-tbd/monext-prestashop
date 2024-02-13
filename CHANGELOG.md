@@ -1,3 +1,11 @@
+2.3.2
+===
+<h2>released on 2024-02-13</h2>
+<ul>
+<li>Reset transaction on order cancel</li>
+<li>Prevent use of payline in cart if no contract defined</li>
+</ul>
+
 2.3.1
 ===
 <h2>released on 2023-09-12</h2>
