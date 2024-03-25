@@ -340,10 +340,14 @@ class PaylinePaymentGateway
         );
         foreach ($contractsList as &$contract) {
             $contract['logo'] = '';
-            if (!empty($contract['cardType']) && !empty($logoFileByCardType[$contract['cardType']])) {
-                if(!empty($logoFileByCardType[$contract['cardType']])) {
-                    $contract['logo'] = $logoFileByCardType[$contract['cardType']];
+            $carType = !empty($contract['cardType']) ? $contract['cardType'] : false;
+
+            if (!empty($logoFileByCardType[$carType])) {
+                if(!empty($logoFileByCardType[$carType])) {
+                    $contract['logo'] = $logoFileByCardType[$carType];
                 }
+            } else {
+                $contract['logo'] = strtolower(str_ireplace('_MNXT', '', $carType)) . '.png';
             }
         }
     }
