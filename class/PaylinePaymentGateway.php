@@ -265,7 +265,9 @@ class PaylinePaymentGateway
     private static function assignLogoToContracts(&$contractsList)
     {
         $logoFileByCardType = array(
-            '3XCB' => '3xcb.png',
+            'COFIDIS' => 'cofidislogo.png',
+            '3XCB' => 'cofidispay3x.png',
+            '4XCB' => 'cofidispay4x.png',
             'ONEY' => 'oney.png',
             '3XONEY' => '3xoney.png',
             '1EURO' => '1euro.png',
