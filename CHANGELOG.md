@@ -1,3 +1,10 @@
+2.3.3
+===
+<h2>released on 2024-03-27</h2>
+<ul>
+<li>Update payment logos</li>
+</ul>
+
 2.3.2
 ===
 <h2>released on 2024-02-13</h2>
