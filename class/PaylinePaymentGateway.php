@@ -265,7 +265,9 @@ class PaylinePaymentGateway
     private static function assignLogoToContracts(&$contractsList)
     {
         $logoFileByCardType = array(
-            '3XCB' => '3xcb.png',
+            'COFIDIS' => 'cofidislogo.png',
+            '3XCB' => 'cofidispay3x.png',
+            '4XCB' => 'cofidispay4x.png',
             'ONEY' => 'oney.png',
             '3XONEY' => '3xoney.png',
             '1EURO' => '1euro.png',
@@ -340,10 +342,14 @@ class PaylinePaymentGateway
         );
         foreach ($contractsList as &$contract) {
             $contract['logo'] = '';
-            if (!empty($contract['cardType']) && !empty($logoFileByCardType[$contract['cardType']])) {
-                if(!empty($logoFileByCardType[$contract['cardType']])) {
-                    $contract['logo'] = $logoFileByCardType[$contract['cardType']];
+            $carType = !empty($contract['cardType']) ? $contract['cardType'] : false;
+
+            if (!empty($logoFileByCardType[$carType])) {
+                if(!empty($logoFileByCardType[$carType])) {
+                    $contract['logo'] = $logoFileByCardType[$carType];
                 }
+            } else {
+                $contract['logo'] = strtolower(str_ireplace('_MNXT', '', $carType)) . '.png';
             }
         }
     }
