@@ -2,10 +2,9 @@
 ===
 <h2>released on 2023-04-11</h2>
 <ul>
-<li>Fix order status on refund</li>
-<li>Throw error on refund without discount</li>
+<li>Total refund on status modification
+<li>Product select in configuration (payment REC)</li>
 </ul>
-
 
 2.3.3
 ===
