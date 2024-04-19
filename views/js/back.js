@@ -7,7 +7,9 @@
 
 function payline_initProductsAutocomplete()
 {
-    $('#product_autocomplete_input').autocomplete('ajax_products_list.php?forceJson=1', {
+    const autocompleteInput = $('#product_autocomplete_input');
+    const token = autocompleteInput.attr('data-token');
+    autocompleteInput.autocomplete('index.php?controller=AdminProducts&ajax=1&action=productsList&forceJson=1&token='+ token, {
         // Use ?forceJson=1 to get image link in the returned values
         minLength: 2,
         minChars: 1,

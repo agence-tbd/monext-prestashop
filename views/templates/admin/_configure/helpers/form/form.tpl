@@ -47,7 +47,7 @@
 				<input type="hidden" name="{$input.name|escape:'html':'UTF-8'}_PRODUCTS" id="{$input.name|escape:'html':'UTF-8'}_PRODUCTS" value="{foreach $input.values as $product}{$product.name|escape:'html':'UTF-8'}¤{/foreach}" />
 				<div id="ajax_choose_product">
 					<div class="input-group">
-						<input type="text" id="product_autocomplete_input" name="product_autocomplete_input" placeholder="{l s='Start typing an ID, reference, or product name' mod='payline'}" />
+						<input type="text" id="product_autocomplete_input" name="product_autocomplete_input" data-token="{getAdminToken tab='AdminProducts'}" placeholder="{l s='Start typing an ID, reference, or product name' mod='payline'}" />
 						<span class="input-group-addon"><i class="icon-search"></i></span>
 					</div>
 				</div>

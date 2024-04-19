@@ -4,7 +4,7 @@
  *
  * @author    Monext <support@payline.com>
  * @copyright Monext - http://www.payline.com
- * @version   2.3.3
+ * @version   2.3.4
  */
 
 if (!defined('_PS_VERSION_')) {
@@ -84,6 +84,8 @@ class payline extends PaymentModule
 
     protected $limited_currencies;
 
+    protected $order_already_refund;
+
     /**
      * Module __construct
      * @since 2.0.0
@@ -94,7 +96,7 @@ class payline extends PaymentModule
         $this->name = 'payline';
         $this->tab = 'payments_gateways';
         $this->module_key = '';
-        $this->version = '2.3.3';
+        $this->version = '2.3.4';
         $this->ps_versions_compliancy = array('min' => '1.7.1.0', 'max' => _PS_VERSION_);
         $this->author = 'Monext';
 
@@ -246,6 +248,7 @@ class payline extends PaymentModule
             || (version_compare(_PS_VERSION_, '1.7.0.0', '<') && !$this->registerHook('displayPayment'))
             || !$this->registerHook('paymentReturn')
             || !$this->registerHook('paymentOptions')
+            || !$this->registerHook('actionObjectOrderDetailUpdateAfter')
             // Install custom order state
             || !$this->createCustomOrderState()
             // Install tables
@@ -686,6 +689,62 @@ class payline extends PaymentModule
                 }
             }
             PaylinePaymentGateway::resetTransaction($idTransaction, $this->l('Manual reset from PrestaShop BackOffice'));
+        }elseif (!empty($params['id_order']) && !empty($params['newOrderStatus'])
+            && Validate::isLoadedObject($params['newOrderStatus'])
+            && ($params['newOrderStatus']->id == Configuration::get('PS_OS_REFUND'))
+        ) {
+            $order = new Order((int)$params['id_order']);
+
+            $orderPayments = OrderPayment::getByOrderReference($order->reference);
+            if (sizeof($orderPayments)) {
+                // Retrieve transaction ID
+                $paylineTransaction = current($orderPayments);
+                $idTransaction = $paylineTransaction->transaction_id;
+
+                $transaction = PaylinePaymentGateway::getTransactionInformations($idTransaction);
+                if (PaylinePaymentGateway::isValidResponse($transaction)) {
+                    $refund = PaylinePaymentGateway::refundTransaction($idTransaction, null, $this->l('Manual refund from PrestaShop BackOffice'));
+                    $this->order_already_refund = true;
+                    if (PaylinePaymentGateway::isValidResponse($refund)) {
+                        $order_detail_list = $order->getOrderDetailList();
+                        foreach ($order_detail_list as $order_detail) {
+                            $order_detail = new OrderDetail((int)$order_detail['id_order_detail']);
+                            $order_detail->product_quantity_refunded = $order_detail->product_quantity;
+                            $order_detail->save();
+                        }
+
+                        $customer = new Customer($order->id_customer);
+                        $customerMessage = new CustomerMessage();
+                        $idCustomerThread = CustomerThread::getIdCustomerThreadByEmailAndIdOrder($customer->email, $order->id);
+
+                        if (!$idCustomerThread) {
+                            $customerThread = new CustomerThread();
+                            $customerThread->id_contact = 0;
+                            $customerThread->id_customer = (int) $order->id_customer;
+                            $customerThread->id_shop = (int) $this->context->shop->id;
+                            $customerThread->id_order = (int) $order->id;
+                            $customerThread->id_lang = (int) $this->context->language->id;
+                            $customerThread->email = $customer->email;
+                            $customerThread->status = 'open';
+                            $customerThread->token = Tools::passwdGen(12);
+                            $customerThread->add();
+                        } else {
+                            $customerThread = new CustomerThread((int) $idCustomerThread);
+                            $customerThread->status = 'open';
+                            $customerThread->update();
+                        }
+
+                        $customerMessage->id_customer_thread = $customerThread->id;
+                        $customerMessage->id_employee = $this->context->employee->id;
+                        $customerMessage->message = $this->l('Manual refund from PrestaShop BackOffice');
+                        $customerMessage->add();
+                    } else {
+                        // Refund NOK
+                        $errors = PaylinePaymentGateway::getErrorResponse($refund);
+                        $this->context->controller->errors[] = sprintf($this->l('Unable to process the refund, Payline reported the following error: “%s“ (code %s)'), $errors['longMessage'], $errors['code']);
+                    }
+                }
+            }
         }
     }
 
@@ -703,7 +762,15 @@ class payline extends PaymentModule
         }
 
         $order = new Order($params['object']->id_order);
-        $amountToRefund = (float)$params['object']->total_products_tax_incl + (float)$params['object']->total_shipping_tax_incl;
+
+        if (Tools::getValue('doPartialRefundPayline')
+            && Tools::getValue('doPartialRefundPaylineAmountValue') > 0
+            && Tools::getValue('doPartialRefundPaylineAmountValue') <= $order->total_paid
+        ) {
+            $amountToRefund = Tools::getValue('doPartialRefundPaylineAmountValue');
+        } else {
+            $amountToRefund = (float)$params['object']->total_products_tax_incl + (float)$params['object']->total_shipping_tax_incl;
+        }
 
         if (Context::getContext()->employee->isLoggedBack()
             && Validate::isLoadedObject($order)
@@ -729,20 +796,6 @@ class payline extends PaymentModule
                             $orderInvoice = null;
                         }
 
-                        $products = $order->getProducts(false, false, false, false);
-                        $totalRefund = array();
-                        foreach ($products as $product) {
-                            $totalRefund[$product['product_id']] = $product['product_quantity_refunded'] >= $product['product_quantity'];
-                        }
-
-                        //Set State REFUND IF all product are refunds
-                        if(!in_array(false, $totalRefund)) {
-                            $history = new OrderHistory();
-                            $history->id_order = (int)$order->id;
-                            $history->changeIdOrderState(_PS_OS_REFUND_, (int)$order->id);
-                            $history->addWithemail();
-                        }
-
                         // Wait 1s because Payline API may take some time to be updated after a refund
                         sleep(1);
 
@@ -751,15 +804,51 @@ class payline extends PaymentModule
                     } else {
                         // Refund NOK
                         $errors = PaylinePaymentGateway::getErrorResponse($refund);
-                        $this->context->controller->errors[] = sprintf($this->l('Unable to process the refund, Payline reported the following error: “%s“ (code %s)'), $errors['longMessage'], $errors['code']);
+                        $errorsMessage = sprintf($this->l('Unable to process the refund, Payline reported the following error: “%s“ (code %s)'), $errors['longMessage'], $errors['code']);
+                        $this->context->controller->errors[] = $errorsMessage;
+                        throw new Exception($errorsMessage);
                     }
                 } else {
                     $errors = PaylinePaymentGateway::getErrorResponse($transaction);
-                    $this->context->controller->errors[] = sprintf($this->l('Unable to process the refund, Payline reported the following error: “%s“ (code %s)'), $errors['longMessage'], $errors['code']);
+                    $errorsMessage = sprintf($this->l('Unable to process the refund, Payline reported the following error: “%s“ (code %s)'), $errors['longMessage'], $errors['code']);
+                    $this->context->controller->errors[] = $errorsMessage;
+                    throw new Exception($errorsMessage);
                 }
             } else {
-                $this->context->controller->errors[] = $this->l('Unable to find any Payline transaction ID on this order');
+                $errorsMessage = $this->l('Unable to find any Payline transaction ID on this order');
+                $this->context->controller->errors[] = $errorsMessage;
+                throw new Exception($errorsMessage);
             }
+        }
+    }
+
+    /**
+     * Sets order status to "Refunded" if all products are refunded
+     * @since 2.3.2
+     * @param $params
+     * @return void
+     */
+    public function hookActionObjectOrderDetailUpdateAfter($params)
+    {
+        if(!empty($this->order_already_refund)) {
+            return;
+        }
+
+        $order = new Order($params['object']->id_order);
+        $products = $order->getProducts(false, false, false, false);
+        $totallyRefund = true;
+        foreach ($products as $product) {
+            if ($product['product_quantity_refunded'] < $product['product_quantity']) {
+                $totallyRefund = false;
+            }
+        }
+
+        //Set State REFUND IF all product are refunds
+        if($totallyRefund) {
+            $history = new OrderHistory();
+            $history->id_order = (int)$order->id;
+            $history->changeIdOrderState(_PS_OS_REFUND_, (int)$order->id);
+            $history->addWithemail();
         }
     }
 
@@ -3117,5 +3206,23 @@ class payline extends PaymentModule
         }
 
         return $order->addOrderPayment($amountPaid, null, $transactionId, null, $date, $invoice);
+    }
+
+    /**
+     * Display additional Payline input on Partial refund form to refund a custom amount
+     * @param $params
+     * @return string
+     */
+    public function hookDisplayAdminOrder($params)
+    {
+        $order = new Order($params['id_order']);
+        if (!Validate::isLoadedObject($order)) {
+            return '';
+        }
+
+        $this->context->smarty->assign('payline_total_paid', $order->total_paid);
+        $this->context->smarty->assign('payline_custom_amount_refund', $this->l('Payline refund online'));
+        $this->context->smarty->assign('payline_custom_amount_refund_error', $this->l('Please try to refund an amount between 0 and the total order paid'));
+        return $this->context->smarty->fetch(_PS_MODULE_DIR_ . $this->name . '/views/templates/hook/partialRefund.tpl');
     }
 }
