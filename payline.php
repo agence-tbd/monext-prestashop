@@ -86,6 +86,8 @@ class payline extends PaymentModule
 
     protected $order_already_refund;
 
+    protected $partialRefund = false;
+
     /**
      * Module __construct
      * @since 2.0.0
@@ -246,9 +248,10 @@ class payline extends PaymentModule
             || !$this->registerHook('actionObjectOrderSlipAddBefore')
             || !$this->registerHook('actionOrderStatusUpdate')
             || (version_compare(_PS_VERSION_, '1.7.0.0', '<') && !$this->registerHook('displayPayment'))
-            || !$this->registerHook('paymentReturn')
+            || !$this->registerHook('displayPaymentReturn')
             || !$this->registerHook('paymentOptions')
             || !$this->registerHook('actionObjectOrderDetailUpdateAfter')
+            || !$this->registerHook('displayAdminOrder')
             // Install custom order state
             || !$this->createCustomOrderState()
             // Install tables
@@ -693,6 +696,10 @@ class payline extends PaymentModule
             && Validate::isLoadedObject($params['newOrderStatus'])
             && ($params['newOrderStatus']->id == Configuration::get('PS_OS_REFUND'))
         ) {
+            if ($this->partialRefund){
+                return;
+            }
+
             $order = new Order((int)$params['id_order']);
 
             $orderPayments = OrderPayment::getByOrderReference($order->reference);
@@ -760,16 +767,15 @@ class payline extends PaymentModule
         if (Tools::getValue('paylineProcessFullRefund')) {
             return;
         }
+        $this->partialRefund = true;
 
         $order = new Order($params['object']->id_order);
 
-        if (Tools::getValue('doPartialRefundPayline')
-            && Tools::getValue('doPartialRefundPaylineAmountValue') > 0
-            && Tools::getValue('doPartialRefundPaylineAmountValue') <= $order->total_paid
+        if (Tools::getValue('doPartialRefundPayline') && Tools::getValue('doPartialRefundPaylineIncludeShippingValue')
         ) {
-            $amountToRefund = Tools::getValue('doPartialRefundPaylineAmountValue');
-        } else {
             $amountToRefund = (float)$params['object']->total_products_tax_incl + (float)$params['object']->total_shipping_tax_incl;
+        } else {
+            $amountToRefund = (float)$params['object']->total_products_tax_incl;
         }
 
         if (Context::getContext()->employee->isLoggedBack()
@@ -858,7 +864,7 @@ class payline extends PaymentModule
      * @param string $params
      * @return array
      */
-    public function hookPaymentReturn($params)
+    public function hookDisplayPaymentReturn($params)
     {
         // Check if module is enabled and PS < 1.7
         if (!$this->active || version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
@@ -3220,9 +3226,9 @@ class payline extends PaymentModule
             return '';
         }
 
-        $this->context->smarty->assign('payline_total_paid', $order->total_paid);
         $this->context->smarty->assign('payline_custom_amount_refund', $this->l('Payline refund online'));
-        $this->context->smarty->assign('payline_custom_amount_refund_error', $this->l('Please try to refund an amount between 0 and the total order paid'));
+        $this->context->smarty->assign('payline_custom_amount_refund_indication', $this->l('Please add product quantity to refund and amount including tax'));
+        $this->context->smarty->assign('payline_custom_amount_refund_shipping', $this->l('Add shipping amount including tax to payline refund'));
         return $this->context->smarty->fetch(_PS_MODULE_DIR_ . $this->name . '/views/templates/hook/partialRefund.tpl');
     }
 }
