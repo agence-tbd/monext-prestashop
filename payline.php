@@ -4,7 +4,7 @@
  *
  * @author    Monext <support@payline.com>
  * @copyright Monext - http://www.payline.com
- * @version   2.3.4
+ * @version   2.3.5
  */
 
 if (!defined('_PS_VERSION_')) {
@@ -98,7 +98,7 @@ class payline extends PaymentModule
         $this->name = 'payline';
         $this->tab = 'payments_gateways';
         $this->module_key = '';
-        $this->version = '2.3.4';
+        $this->version = '2.3.5';
         $this->ps_versions_compliancy = array('min' => '1.7.1.0', 'max' => _PS_VERSION_);
         $this->author = 'Monext';
 
@@ -915,7 +915,9 @@ class payline extends PaymentModule
         ));
 
         // Web payment
-        if (Configuration::get('PAYLINE_WEB_CASH_ENABLE')) {
+        if (Configuration::get('PAYLINE_WEB_CASH_ENABLE')
+        )
+        {
             $uxMode = Configuration::get('PAYLINE_WEB_CASH_UX');
 
             $webCash = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
@@ -964,7 +966,10 @@ class payline extends PaymentModule
         }
 
         // Recurring payment
-        if (Configuration::get('PAYLINE_RECURRING_ENABLE') && (!Configuration::get('PAYLINE_RECURRING_TRIGGER') || ($this->context->cart->getOrderTotal() > Configuration::get('PAYLINE_RECURRING_TRIGGER')))) {
+        if (Configuration::get('PAYLINE_RECURRING_ENABLE')
+            && (!Configuration::get('PAYLINE_RECURRING_TRIGGER') || ($this->context->cart->getOrderTotal() > Configuration::get('PAYLINE_RECURRING_TRIGGER')))
+        )
+        {
             $uxMode = Configuration::get('PAYLINE_RECURRING_UX');
 
             $recurringPayment = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
@@ -1013,7 +1018,11 @@ class payline extends PaymentModule
         }
 
         // Subscribe payment (must be logged customer, not guest)
-        if (Configuration::get('PAYLINE_SUBSCRIBE_ENABLE') && !empty($this->context->cookie->id_customer) && $this->context->customer->isLogged()) {
+        if (Configuration::get('PAYLINE_SUBSCRIBE_ENABLE')
+            && !empty($this->context->cookie->id_customer)
+            && $this->context->customer->isLogged()
+        )
+        {
             $subscribePayment = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
             $subscribeTitle = Configuration::get('PAYLINE_SUBSCRIBE_TITLE', $this->context->language->id);
             $subscribeSubTitle = Configuration::get('PAYLINE_SUBSCRIBE_SUBTITLE', $this->context->language->id);
@@ -2559,10 +2568,10 @@ class payline extends PaymentModule
         if ($paymentInfos['payment']['action'] == 100) {
             $idOrderState = (int)Configuration::get('PAYLINE_ID_STATE_AUTOR');
         } else {
-            if ($paymentInfos['result']['code'] == '00000') {
+            if (PaylinePaymentGateway::isValidResponse($paymentInfos, PaylinePaymentGateway::$approvedResponseCode)) {
                 // Transaction accepted
                 $idOrderState = (int)Configuration::get('PS_OS_PAYMENT');
-            } else {
+            } else if (PaylinePaymentGateway::isValidResponse($paymentInfos, PaylinePaymentGateway::$pendingResponseCode)) {
                 // Transaction is pending
                 $idOrderState = (int)Configuration::get('PAYLINE_ID_STATE_PENDING');
             }
@@ -2590,53 +2599,21 @@ class payline extends PaymentModule
         $fixOrderPayment = false;
         $totalAmountPaid = Tools::ps_round((float)$amountPaid, 2);
 
-        if ($paymentInfos['payment']['mode'] == 'NX') {
-            // Recurring payment
-            $nxConfiguration = PaylinePaymentGateway::getNxConfiguration(round($cart->getOrderTotal() * 100));
-            if (!$orderExists) {
-                // First amount
-                $totalAmountToPay = (float)Tools::ps_round((float)($nxConfiguration['firstAmount'] / 100), 2);
+        if ($paymentInfos['payment']['mode'] == 'NX'
+            || $paymentInfos['payment']['mode'] == 'REC'
+        ) {
+            $checkAmountToPay = false;
+            $idOrderState = (int)Configuration::get('PAYLINE_ID_ORDER_STATE_NX');
 
-                // Set order state
-                $idOrderState = (int)Configuration::get('PAYLINE_ID_ORDER_STATE_NX');
+            // Fake $amountPaid in order to create the order without payment error, we will fix the order payment after order creation
+            $amountPaid = $cart->getOrderTotal();
 
-                // Fake $amountPaid in order to create the order without payment error, we will fix the order payment after order creation
-                $amountPaid = $cart->getOrderTotal();
-                $fixOrderPayment = true;
-            } else {
-                // Recurrent amount
-                $totalAmountToPay = (float)Tools::ps_round((float)($nxConfiguration['amount'] / 100), 2);
-                // Do not check amount to pay
-                $checkAmountToPay = false;
-            }
         } else {
             // Web payment
             $totalAmountToPay = (float)Tools::ps_round((float)$cart->getOrderTotal(true, Cart::BOTH), 2);
         }
 
-        if ($checkAmountToPay && number_format($totalAmountToPay, _PS_PRICE_COMPUTE_PRECISION_) != number_format($totalAmountPaid, _PS_PRICE_COMPUTE_PRECISION_)) {
-            // Wrong amount paid, do not create order
-            PrestaShopLogger::addLog('payline::createOrder - amount mismatch : topay='.number_format($totalAmountToPay, _PS_PRICE_COMPUTE_PRECISION_).', paid='.number_format($totalAmountPaid, _PS_PRICE_COMPUTE_PRECISION_), 1, null, 'Cart', $cart->id);
 
-            // We try to refund/cancel the current transaction
-            // If refund can't be done, we continue the classic process. Order will be marked as invalid
-            // Quick fix for 2.2.2 : refund is disabled
-            /*
-            $cancelTransactionResult = PaylinePaymentGateway::cancelTransaction($paymentInfos, $this->l('Error: automatic cancel (cart total != amount paid)'));
-            if ($cancelTransactionResult) {
-                $errorCode = payline::INVALID_AMOUNT;
-
-                // Set a cookie value that expose how many try users has made with invalid amount
-                if (!isset($this->context->cookie->pl_try)) {
-                    $this->context->cookie->pl_try = 2;
-                } else {
-                    $this->context->cookie->pl_try += 1;
-                }
-
-                return array($order, $validateOrderResult, $errorMessage, $errorCode);
-            }
-            */
-        }
 
         // Unset pl_try cookie value
         if (isset($this->context->cookie->pl_try)) {
@@ -2740,7 +2717,8 @@ class payline extends PaymentModule
             && isset($paymentInfos['formatedPrivateDataList']['id_cart'])
             && isset($paymentInfos['formatedPrivateDataList']['secure_key'])
         ) {
-            if (PaylinePaymentGateway::isValidResponse($paymentInfos, PaylinePaymentGateway::$approvedResponseCode) || PaylinePaymentGateway::isValidResponse($paymentInfos, PaylinePaymentGateway::$pendingResponseCode)) {
+            if (PaylinePaymentGateway::isValidResponse($paymentInfos, PaylinePaymentGateway::$approvedResponseCode)
+                || PaylinePaymentGateway::isValidResponse($paymentInfos, PaylinePaymentGateway::$pendingResponseCode)) {
                 // Transaction approved or pending
 
                 // OK we can process the order via customer return
@@ -2748,29 +2726,7 @@ class payline extends PaymentModule
                 // Check if cart exists
                 $cart = new Cart($idCart);
                 if (Validate::isLoadedObject($cart)) {
-                    // Create the recurrent wallet payment
-                    if (!empty($paymentInfos['formatedPrivateDataList']['payment_method']) && $paymentInfos['formatedPrivateDataList']['payment_method'] == PaylinePaymentGateway::SUBSCRIBE_PAYMENT_METHOD) {
-                        $subscriptionRequest = PaylinePaymentGateway::createSubscriptionRequest($paymentInfos);
-                        if (PaylinePaymentGateway::isValidResponse($subscriptionRequest, array('02500', '02501'))) {
-                            // Create the order
-                            list($order, $validateOrderResult, $errorMessage, $errorCode) = $this->createOrder($cart, $paymentInfos, $token, $subscriptionRequest['paymentRecordId']);
-                        } else {
-                            // Unable to create subscription request...
-                            $errorCode = payline::SUBSCRIPTION_ERROR;
-                            $cancelTransactionResult = PaylinePaymentGateway::cancelTransaction($paymentInfos, $this->l('Error: automatic cancel (cannot create subscription)'));
-                            if ($cancelTransactionResult) {
-                                // Set a cookie value that expose how many try users has made with invalid amount
-                                if (!isset($this->context->cookie->pl_try)) {
-                                    $this->context->cookie->pl_try = 2;
-                                } else {
-                                    $this->context->cookie->pl_try += 1;
-                                }
-                            }
-                        }
-                    } else {
-                        // Create the order
-                        list($order, $validateOrderResult, $errorMessage, $errorCode) = $this->createOrder($cart, $paymentInfos, $token);
-                    }
+                      list($order, $validateOrderResult, $errorMessage, $errorCode) = $this->createOrder($cart, $paymentInfos, $token);
                 } else {
                     // Invalid Cart ID
                     $errorCode = payline::INVALID_CART_ID;
@@ -2831,7 +2787,8 @@ class payline extends PaymentModule
                 }
 
                 // Create the recurrent wallet payment
-                if (!empty($paymentInfos['formatedPrivateDataList']['payment_method']) && $paymentInfos['formatedPrivateDataList']['payment_method'] == PaylinePaymentGateway::SUBSCRIBE_PAYMENT_METHOD) {
+                if (!empty($paymentInfos['formatedPrivateDataList']['payment_method'])
+                    && $paymentInfos['formatedPrivateDataList']['payment_method'] == PaylinePaymentGateway::SUBSCRIBE_PAYMENT_METHOD) {
                     $subscriptionRequest = PaylinePaymentGateway::createSubscriptionRequest($paymentInfos);
                     if (PaylinePaymentGateway::isValidResponse($subscriptionRequest, array('02500', '02501'))) {
                         // Create the order

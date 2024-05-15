@@ -26,6 +26,7 @@ class PaylinePaymentGateway
     public static $approvedResponseCode = array(
         '34230',
         '34330',
+        '02400',
         '02500',
         '02501',
     );
@@ -391,7 +392,7 @@ class PaylinePaymentGateway
             $paymentMode = 'NX';
         } elseif ($paymentMethod == self::SUBSCRIBE_PAYMENT_METHOD) {
             // Create first transaction into CPT mode, we will create recurrent wallet on notification/customer return
-            $paymentMode = 'CPT';
+            $paymentMode = 'REC';
         }
         // Payment action
         $paymentAction = '101';
@@ -464,7 +465,9 @@ class PaylinePaymentGateway
             }
         }
         // Set buyer wallet id
-        if (($paymentMethod == self::WEB_PAYMENT_METHOD && Configuration::get('PAYLINE_WEB_CASH_BY_WALLET')) || ($paymentMethod == self::RECURRING_PAYMENT_METHOD && Configuration::get('PAYLINE_RECURRING_BY_WALLET')) || ($paymentMethod == self::SUBSCRIBE_PAYMENT_METHOD)) {
+        if (($paymentMethod == self::WEB_PAYMENT_METHOD && Configuration::get('PAYLINE_WEB_CASH_BY_WALLET'))
+            || ($paymentMethod == self::RECURRING_PAYMENT_METHOD && Configuration::get('PAYLINE_RECURRING_BY_WALLET'))
+        ) {
             $params['buyer']['walletId'] = Tools::encrypt((int)$context->customer->id);
         }
         // Customization
@@ -475,9 +478,9 @@ class PaylinePaymentGateway
         // Recurring informations (NX)
         if ($paymentMethod == self::RECURRING_PAYMENT_METHOD) {
             $params['recurring'] = self::getNxConfiguration($params['payment']['amount']);
+        } elseif ($paymentMethod == self::SUBSCRIBE_PAYMENT_METHOD) {
+            $params['recurring'] = self::getSubscriptionConfiguration($params['payment']['amount']);
         }
-
-
 
         $defaultCategory = (int)Configuration::get('PAYLINE_DEFAULT_CATEGORY');
         if(!$defaultCategory or $defaultCategory>26) {
@@ -529,14 +532,10 @@ class PaylinePaymentGateway
         $params = array(
             'version' => self::API_VERSION,
             'payment' => $paymentInfos['payment'],
-            'orderRef' => $paymentInfos['order']['ref'],
-            'orderDate' => $paymentInfos['order']['date'],
-            'scheduledDate' => '',
-            'cardInd' => '',
-            'walletId' => $paymentInfos['wallet']['walletId'],
+            'order' => $paymentInfos['order'],
+            'buyer' => $paymentInfos['buyer'],
             'recurring' => PaylinePaymentGateway::getSubscriptionConfiguration($paymentInfos['payment']['amount']),
             'privateDataList' => $paymentInfos['privateDataList'],
-            'order' => $paymentInfos['order'],
         );
 
         // Add private data to the payment request
@@ -578,12 +577,14 @@ class PaylinePaymentGateway
     {
         $billingLeft = (int)Configuration::get('PAYLINE_RECURRING_NUMBER');
         $firstWeight = (int)Configuration::get('PAYLINE_RECURRING_FIRST_WEIGHT');
+        $firstAmount =$totalToPay;
         if ($firstWeight > 0) {
             // Calculate first amount regarding weight of first period
             $firstAmount = round($totalToPay * ($firstWeight / 100));
-        } else {
+        } elseif($billingLeft>0) {
             // Calculate first amount regarding billingLeft
             $firstAmount = round($totalToPay / $billingLeft);
+
         }
         // Calculare recurrent amount
         $recurrentAmount = round(($totalToPay - $firstAmount) / ($billingLeft - 1));
@@ -608,62 +609,74 @@ class PaylinePaymentGateway
     {
         $startDay = (int)Configuration::get('PAYLINE_SUBSCRIBE_DAY');
         $subscribePeriodicity = (int)Configuration::get('PAYLINE_SUBSCRIBE_PERIODICITY');
-        $waitPeriod = (int)Configuration::get('PAYLINE_SUBSCRIBE_START_DATE') + 1;
+        $waitPeriod = (int)Configuration::get('PAYLINE_SUBSCRIBE_START_DATE');
         // Remove 1 billing because we've already done it into CPT mode
-        $billingLeft = (Configuration::get('PAYLINE_SUBSCRIBE_NUMBER') > 1 ? ((int)Configuration::get('PAYLINE_SUBSCRIBE_NUMBER') - 1) : null);
+        $billingLeft = Configuration::get('PAYLINE_SUBSCRIBE_NUMBER') > 1 ? (int)Configuration::get('PAYLINE_SUBSCRIBE_NUMBER') : null;
+        if(!$waitPeriod && $billingLeft>0) {
+            $billingLeft--;
+        }
 
+        $recurringPeriod = $waitPeriod+1;
+        $recurringFormatTime = null;
         switch ($subscribePeriodicity) {
             case 10:
                 // Daily
-                $recurringStartDate  = date('d/m/Y', strtotime(sprintf('now + %d day', $waitPeriod)));
+                $recurringFormatTime = 'now + %d day';
                 break;
             case 20:
                 // Weekly
-                $recurringStartDate  = date('d/m/Y', strtotime(sprintf('now + %d week', $waitPeriod)));
+                $recurringFormatTime = 'now + %d week';
                 break;
             case 30:
                 // Bimonthly
-                $recurringStartDate  = date('d/m/Y', strtotime(sprintf('now + %d week', $waitPeriod * 2)));
+                $recurringFormatTime = 'now + %d week';
+                $recurringPeriod = 2 * $waitPeriod;
                 break;
             case 40:
                 // Monthly
-                if ($startDay == 0) {
-                    // Start date is the same day as the initial order
-                    $recurringStartDate = date('d/m/Y', strtotime(sprintf('now + %d month', $waitPeriod)));
-                } else {
-                    // Start date has a specific day, check if we have to go to the next month
-                    $recurringStartDateTimeStamp = strtotime(sprintf('+ %d month ', $waitPeriod), mktime(date("H"), date("i"), date("s"), date("n"), $startDay, date("Y")));
-                    $recurringStartDate = date('d/m/Y', $recurringStartDateTimeStamp);
-                }
+                $recurringFormatTime = 'now + %d month';
                 break;
             case 50:
                 // Two quaterly
-                $recurringStartDate  = date('d/m/Y', strtotime(sprintf('now + %d month', $waitPeriod * 2)));
+                $recurringFormatTime = 'now + %d month';
+                $recurringPeriod = 2 * $waitPeriod;
                 break;
             case 60:
                 // Quaterly
-                $recurringStartDate  = date('d/m/Y', strtotime(sprintf('now + %d month', $waitPeriod * 3)));
+                $recurringFormatTime = 'now + %d month';
+                $recurringPeriod = 3 * $waitPeriod;
                 break;
             case 70:
                 // Semiannual
-                $recurringStartDate  = date('d/m/Y', strtotime(sprintf('now + %d month', $waitPeriod * 6)));
+                $recurringFormatTime = 'now + %d month';
+                $recurringPeriod = 6 * $waitPeriod;
                 break;
             case 80:
                 // Annual
-                $recurringStartDate  = date('d/m/Y', strtotime(sprintf('now + %d year', $waitPeriod)));
+                $recurringFormatTime = 'now + %d year';
+                $recurringPeriod = 3 * $waitPeriod;
                 break;
             case 90:
                 // Biannual
-                $recurringStartDate  = date('d/m/Y', strtotime(sprintf('now + %d year', $waitPeriod * 2)));
+                $recurringFormatTime = 'now + %d year';
+                $recurringPeriod = 2 * $waitPeriod;
                 break;
         }
+
+
+        $recurringStartDate = null;
+        if($waitPeriod && $recurringFormatTime) {
+            $recurringStartDate  = date('d/m/Y', strtotime(sprintf($recurringFormatTime, $recurringPeriod)));
+        }
+
+
         return array(
-            'firstAmount' => null,
+            'firstAmount' => $totalToPay,
             'amount' => $totalToPay,
             'billingLeft' => $billingLeft,
             'billingCycle' => Configuration::get('PAYLINE_SUBSCRIBE_PERIODICITY'),
             'billingDay' => Configuration::get('PAYLINE_SUBSCRIBE_DAY') ? Configuration::get('PAYLINE_SUBSCRIBE_DAY') : date('d'),
-            'startDate' => $recurringStartDate,
+            'startDate' => $recurringStartDate
         );
     }
 
@@ -1044,7 +1057,7 @@ class PaylinePaymentGateway
      */
     public static function isValidResponse($result, $validFallbackCodeList = array())
     {
-        $validClassic = (is_array($result) && isset($result['result']['code']) && $result['result']['code'] == '00000');
+        $validClassic  = (is_array($result) && isset($result['result']['code']) && $result['result']['code'] == '00000');
         $validFallback = (is_array($result) && isset($result['result']['code']) && in_array($result['result']['code'], $validFallbackCodeList));
 
         return ($validClassic || $validFallback);
