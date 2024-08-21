@@ -86,6 +86,8 @@ class payline extends PaymentModule
 
     protected $order_already_refund;
 
+    protected $partialRefund = false;
+
     /**
      * Module __construct
      * @since 2.0.0
@@ -246,9 +248,10 @@ class payline extends PaymentModule
             || !$this->registerHook('actionObjectOrderSlipAddBefore')
             || !$this->registerHook('actionOrderStatusUpdate')
             || (version_compare(_PS_VERSION_, '1.7.0.0', '<') && !$this->registerHook('displayPayment'))
-            || !$this->registerHook('paymentReturn')
+            || !$this->registerHook('displayPaymentReturn')
             || !$this->registerHook('paymentOptions')
             || !$this->registerHook('actionObjectOrderDetailUpdateAfter')
+            || !$this->registerHook('displayAdminOrder')
             // Install custom order state
             || !$this->createCustomOrderState()
             // Install tables
@@ -693,6 +696,10 @@ class payline extends PaymentModule
             && Validate::isLoadedObject($params['newOrderStatus'])
             && ($params['newOrderStatus']->id == Configuration::get('PS_OS_REFUND'))
         ) {
+            if ($this->partialRefund){
+                return;
+            }
+
             $order = new Order((int)$params['id_order']);
 
             $orderPayments = OrderPayment::getByOrderReference($order->reference);
@@ -760,16 +767,15 @@ class payline extends PaymentModule
         if (Tools::getValue('paylineProcessFullRefund')) {
             return;
         }
+        $this->partialRefund = true;
 
         $order = new Order($params['object']->id_order);
 
-        if (Tools::getValue('doPartialRefundPayline')
-            && Tools::getValue('doPartialRefundPaylineAmountValue') > 0
-            && Tools::getValue('doPartialRefundPaylineAmountValue') <= $order->total_paid
+        if (Tools::getValue('doPartialRefundPayline') && Tools::getValue('doPartialRefundPaylineIncludeShippingValue')
         ) {
-            $amountToRefund = Tools::getValue('doPartialRefundPaylineAmountValue');
-        } else {
             $amountToRefund = (float)$params['object']->total_products_tax_incl + (float)$params['object']->total_shipping_tax_incl;
+        } else {
+            $amountToRefund = (float)$params['object']->total_products_tax_incl;
         }
 
         if (Context::getContext()->employee->isLoggedBack()
@@ -858,7 +864,7 @@ class payline extends PaymentModule
      * @param string $params
      * @return array
      */
-    public function hookPaymentReturn($params)
+    public function hookDisplayPaymentReturn($params)
     {
         // Check if module is enabled and PS < 1.7
         if (!$this->active || version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
@@ -909,7 +915,9 @@ class payline extends PaymentModule
         ));
 
         // Web payment
-        if (Configuration::get('PAYLINE_WEB_CASH_ENABLE')) {
+        if (Configuration::get('PAYLINE_WEB_CASH_ENABLE')
+        )
+        {
             $uxMode = Configuration::get('PAYLINE_WEB_CASH_UX');
 
             $webCash = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
@@ -958,7 +966,10 @@ class payline extends PaymentModule
         }
 
         // Recurring payment
-        if (Configuration::get('PAYLINE_RECURRING_ENABLE') && (!Configuration::get('PAYLINE_RECURRING_TRIGGER') || ($this->context->cart->getOrderTotal() > Configuration::get('PAYLINE_RECURRING_TRIGGER')))) {
+        if (Configuration::get('PAYLINE_RECURRING_ENABLE')
+            && (!Configuration::get('PAYLINE_RECURRING_TRIGGER') || ($this->context->cart->getOrderTotal() > Configuration::get('PAYLINE_RECURRING_TRIGGER')))
+        )
+        {
             $uxMode = Configuration::get('PAYLINE_RECURRING_UX');
 
             $recurringPayment = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
@@ -1007,7 +1018,11 @@ class payline extends PaymentModule
         }
 
         // Subscribe payment (must be logged customer, not guest)
-        if (Configuration::get('PAYLINE_SUBSCRIBE_ENABLE') && !empty($this->context->cookie->id_customer) && $this->context->customer->isLogged()) {
+        if (Configuration::get('PAYLINE_SUBSCRIBE_ENABLE')
+            && !empty($this->context->cookie->id_customer)
+            && $this->context->customer->isLogged()
+        )
+        {
             $subscribePayment = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
             $subscribeTitle = Configuration::get('PAYLINE_SUBSCRIBE_TITLE', $this->context->language->id);
             $subscribeSubTitle = Configuration::get('PAYLINE_SUBSCRIBE_SUBTITLE', $this->context->language->id);
@@ -2553,10 +2568,10 @@ class payline extends PaymentModule
         if ($paymentInfos['payment']['action'] == 100) {
             $idOrderState = (int)Configuration::get('PAYLINE_ID_STATE_AUTOR');
         } else {
-            if ($paymentInfos['result']['code'] == '00000') {
+            if (PaylinePaymentGateway::isValidResponse($paymentInfos, PaylinePaymentGateway::$approvedResponseCode)) {
                 // Transaction accepted
                 $idOrderState = (int)Configuration::get('PS_OS_PAYMENT');
-            } else {
+            } else if (PaylinePaymentGateway::isValidResponse($paymentInfos, PaylinePaymentGateway::$pendingResponseCode)) {
                 // Transaction is pending
                 $idOrderState = (int)Configuration::get('PAYLINE_ID_STATE_PENDING');
             }
@@ -2584,53 +2599,21 @@ class payline extends PaymentModule
         $fixOrderPayment = false;
         $totalAmountPaid = Tools::ps_round((float)$amountPaid, 2);
 
-        if ($paymentInfos['payment']['mode'] == 'NX') {
-            // Recurring payment
-            $nxConfiguration = PaylinePaymentGateway::getNxConfiguration(round($cart->getOrderTotal() * 100));
-            if (!$orderExists) {
-                // First amount
-                $totalAmountToPay = (float)Tools::ps_round((float)($nxConfiguration['firstAmount'] / 100), 2);
+        if ($paymentInfos['payment']['mode'] == 'NX'
+            || $paymentInfos['payment']['mode'] == 'REC'
+        ) {
+            $checkAmountToPay = false;
+            $idOrderState = (int)Configuration::get('PAYLINE_ID_ORDER_STATE_NX');
 
-                // Set order state
-                $idOrderState = (int)Configuration::get('PAYLINE_ID_ORDER_STATE_NX');
+            // Fake $amountPaid in order to create the order without payment error, we will fix the order payment after order creation
+            $amountPaid = $cart->getOrderTotal();
 
-                // Fake $amountPaid in order to create the order without payment error, we will fix the order payment after order creation
-                $amountPaid = $cart->getOrderTotal();
-                $fixOrderPayment = true;
-            } else {
-                // Recurrent amount
-                $totalAmountToPay = (float)Tools::ps_round((float)($nxConfiguration['amount'] / 100), 2);
-                // Do not check amount to pay
-                $checkAmountToPay = false;
-            }
         } else {
             // Web payment
             $totalAmountToPay = (float)Tools::ps_round((float)$cart->getOrderTotal(true, Cart::BOTH), 2);
         }
 
-        if ($checkAmountToPay && number_format($totalAmountToPay, _PS_PRICE_COMPUTE_PRECISION_) != number_format($totalAmountPaid, _PS_PRICE_COMPUTE_PRECISION_)) {
-            // Wrong amount paid, do not create order
-            PrestaShopLogger::addLog('payline::createOrder - amount mismatch : topay='.number_format($totalAmountToPay, _PS_PRICE_COMPUTE_PRECISION_).', paid='.number_format($totalAmountPaid, _PS_PRICE_COMPUTE_PRECISION_), 1, null, 'Cart', $cart->id);
 
-            // We try to refund/cancel the current transaction
-            // If refund can't be done, we continue the classic process. Order will be marked as invalid
-            // Quick fix for 2.2.2 : refund is disabled
-            /*
-            $cancelTransactionResult = PaylinePaymentGateway::cancelTransaction($paymentInfos, $this->l('Error: automatic cancel (cart total != amount paid)'));
-            if ($cancelTransactionResult) {
-                $errorCode = payline::INVALID_AMOUNT;
-
-                // Set a cookie value that expose how many try users has made with invalid amount
-                if (!isset($this->context->cookie->pl_try)) {
-                    $this->context->cookie->pl_try = 2;
-                } else {
-                    $this->context->cookie->pl_try += 1;
-                }
-
-                return array($order, $validateOrderResult, $errorMessage, $errorCode);
-            }
-            */
-        }
 
         // Unset pl_try cookie value
         if (isset($this->context->cookie->pl_try)) {
@@ -2734,7 +2717,8 @@ class payline extends PaymentModule
             && isset($paymentInfos['formatedPrivateDataList']['id_cart'])
             && isset($paymentInfos['formatedPrivateDataList']['secure_key'])
         ) {
-            if (PaylinePaymentGateway::isValidResponse($paymentInfos, PaylinePaymentGateway::$approvedResponseCode) || PaylinePaymentGateway::isValidResponse($paymentInfos, PaylinePaymentGateway::$pendingResponseCode)) {
+            if (PaylinePaymentGateway::isValidResponse($paymentInfos, PaylinePaymentGateway::$approvedResponseCode)
+                || PaylinePaymentGateway::isValidResponse($paymentInfos, PaylinePaymentGateway::$pendingResponseCode)) {
                 // Transaction approved or pending
 
                 // OK we can process the order via customer return
@@ -2742,29 +2726,7 @@ class payline extends PaymentModule
                 // Check if cart exists
                 $cart = new Cart($idCart);
                 if (Validate::isLoadedObject($cart)) {
-                    // Create the recurrent wallet payment
-                    if (!empty($paymentInfos['formatedPrivateDataList']['payment_method']) && $paymentInfos['formatedPrivateDataList']['payment_method'] == PaylinePaymentGateway::SUBSCRIBE_PAYMENT_METHOD) {
-                        $subscriptionRequest = PaylinePaymentGateway::createSubscriptionRequest($paymentInfos);
-                        if (PaylinePaymentGateway::isValidResponse($subscriptionRequest, array('02500', '02501'))) {
-                            // Create the order
-                            list($order, $validateOrderResult, $errorMessage, $errorCode) = $this->createOrder($cart, $paymentInfos, $token, $subscriptionRequest['paymentRecordId']);
-                        } else {
-                            // Unable to create subscription request...
-                            $errorCode = payline::SUBSCRIPTION_ERROR;
-                            $cancelTransactionResult = PaylinePaymentGateway::cancelTransaction($paymentInfos, $this->l('Error: automatic cancel (cannot create subscription)'));
-                            if ($cancelTransactionResult) {
-                                // Set a cookie value that expose how many try users has made with invalid amount
-                                if (!isset($this->context->cookie->pl_try)) {
-                                    $this->context->cookie->pl_try = 2;
-                                } else {
-                                    $this->context->cookie->pl_try += 1;
-                                }
-                            }
-                        }
-                    } else {
-                        // Create the order
-                        list($order, $validateOrderResult, $errorMessage, $errorCode) = $this->createOrder($cart, $paymentInfos, $token);
-                    }
+                      list($order, $validateOrderResult, $errorMessage, $errorCode) = $this->createOrder($cart, $paymentInfos, $token);
                 } else {
                     // Invalid Cart ID
                     $errorCode = payline::INVALID_CART_ID;
@@ -2825,7 +2787,8 @@ class payline extends PaymentModule
                 }
 
                 // Create the recurrent wallet payment
-                if (!empty($paymentInfos['formatedPrivateDataList']['payment_method']) && $paymentInfos['formatedPrivateDataList']['payment_method'] == PaylinePaymentGateway::SUBSCRIBE_PAYMENT_METHOD) {
+                if (!empty($paymentInfos['formatedPrivateDataList']['payment_method'])
+                    && $paymentInfos['formatedPrivateDataList']['payment_method'] == PaylinePaymentGateway::SUBSCRIBE_PAYMENT_METHOD) {
                     $subscriptionRequest = PaylinePaymentGateway::createSubscriptionRequest($paymentInfos);
                     if (PaylinePaymentGateway::isValidResponse($subscriptionRequest, array('02500', '02501'))) {
                         // Create the order
@@ -3220,9 +3183,9 @@ class payline extends PaymentModule
             return '';
         }
 
-        $this->context->smarty->assign('payline_total_paid', $order->total_paid);
         $this->context->smarty->assign('payline_custom_amount_refund', $this->l('Payline refund online'));
-        $this->context->smarty->assign('payline_custom_amount_refund_error', $this->l('Please try to refund an amount between 0 and the total order paid'));
+        $this->context->smarty->assign('payline_custom_amount_refund_indication', $this->l('Please add product quantity to refund and amount including tax'));
+        $this->context->smarty->assign('payline_custom_amount_refund_shipping', $this->l('Add shipping amount including tax to payline refund'));
         return $this->context->smarty->fetch(_PS_MODULE_DIR_ . $this->name . '/views/templates/hook/partialRefund.tpl');
     }
 }
