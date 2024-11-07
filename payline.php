@@ -235,7 +235,9 @@ class payline extends PaymentModule
         Configuration::updateValue('PAYLINE_PROXY_LOGIN', false);
         Configuration::updateValue('PAYLINE_PROXY_PASSWORD', false);
         Configuration::updateValue('PAYLINE_CONTRACTS', false);
+        Configuration::updateValue('PAYLINE_ALT_CONTRACTS_AS_MAIN', false);
         Configuration::updateValue('PAYLINE_ALT_CONTRACTS', false);
+
 
         // Run parent install process, register to hooks, then force update module position
         if (!parent::install()
@@ -2257,33 +2259,39 @@ class payline extends PaymentModule
                     ),
                     'input' => array(
                         array(
-                            'type' => 'html',
-                            'name' => '
-                            <h2>' . $this->l('Select and sort the contracts you want to make available to your customers') . '</h2>
-                            <p>' . $this->l('You can sort contracts by using drag & drop method') . '</p>',
-                            'col' => 12,
-                            'label' => '',
-                        ),
-                        array(
                             'type' => 'contracts',
                             'name' => 'PAYLINE_CONTRACTS',
-                            'label' => '',
-                            'col' => 12,
+                            'label' => '
+                            <h2>' . $this->l('Select and sort the contracts you want to make available to your customers') . '</h2>
+                            <p>' . $this->l('You can sort contracts by using drag & drop method') . '</p>',                            'col' => 12,
                             'contractsList' => $contractsList,
                             'enabledContracts' => $enabledContracts,
                         ),
                         array(
-                            'type' => 'html',
-                            'name' => '
-                            <h2>' . $this->l('Select and sort the alternative contracts you want to make available to your customers') . '</h2>
-                            <p>' . $this->l('You can sort contracts by using drag & drop method') . '</p>',
-                            'col' => 12,
-                            'label' => '',
+                            'type' => 'switch',
+                            'label' => $this->l('Use same alt contracts as main'),
+                            'name' => 'PAYLINE_ALT_CONTRACTS_AS_MAIN',
+                            'is_bool' => true,
+                            'values' => array(
+                                array(
+                                    'id' => 'active_on',
+                                    'value' => true,
+                                    'label' => $this->l('Enabled'),
+                                ),
+                                array(
+                                    'id' => 'active_off',
+                                    'value' => false,
+                                    'label' => $this->l('Disabled'),
+                                )
+                            ),
                         ),
                         array(
                             'type' => 'contracts',
                             'name' => 'PAYLINE_ALT_CONTRACTS',
-                            'label' => '',
+                            'depends' => 'PAYLINE_ALT_CONTRACTS_AS_MAIN',
+                            'label' => '
+                            <h2>' . $this->l('Select and sort the alternative contracts you want to make available to your customers') . '</h2>
+                            <p>' . $this->l('You can sort contracts by using drag & drop method') . '</p>',
                             'col' => 12,
                             'contractsList' => $fallbackContractsList,
                             'enabledContracts' => $enabledFallbackContracts,
@@ -2408,6 +2416,7 @@ class payline extends PaymentModule
         } elseif ($tabName == 'contracts') {
             return array(
                 'PAYLINE_CONTRACTS' => Configuration::get('PAYLINE_CONTRACTS'),
+                'PAYLINE_ALT_CONTRACTS_AS_MAIN' => Configuration::get('PAYLINE_ALT_CONTRACTS_AS_MAIN'),
                 'PAYLINE_ALT_CONTRACTS' => Configuration::get('PAYLINE_ALT_CONTRACTS'),
             );
         }

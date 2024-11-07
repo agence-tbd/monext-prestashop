@@ -1153,15 +1153,7 @@ class PaylinePaymentGateway
      */
     public static function getEnabledContracts($contractNumberOnly = false)
     {
-        $enabledContractsList = array();
-        $enabledContracts = Configuration::get('PAYLINE_CONTRACTS');
-        if (!empty($enabledContracts) && json_decode($enabledContracts) !== false) {
-            $enabledContractsList = json_decode($enabledContracts);
-            if ($contractNumberOnly && is_array($enabledContractsList)) {
-                $enabledContractsList = array_map('PaylinePaymentGateway::extractContractNumber', $enabledContractsList);
-            }
-        }
-        return $enabledContractsList;
+        return self::getConfigContracts('PAYLINE_CONTRACTS', $contractNumberOnly);
     }
 
     /**
@@ -1172,8 +1164,22 @@ class PaylinePaymentGateway
      */
     public static function getFallbackEnabledContracts($contractNumberOnly = false)
     {
+        $configKey = 'PAYLINE_CONTRACTS';
+        if(!Configuration::get('PAYLINE_ALT_CONTRACTS_AS_MAIN')) {
+            $configKey = 'PAYLINE_ALT_CONTRACTS';
+        }
+
+        return self::getConfigContracts($configKey, $contractNumberOnly);
+    }
+
+    /**
+     * @param $configKey
+     * @param $contractNumberOnly
+     * @return array|mixed
+     */
+    protected static function getConfigContracts($configKey, $contractNumberOnly = false) {
         $enabledContractsList = array();
-        $enabledContracts = Configuration::get('PAYLINE_ALT_CONTRACTS');
+        $enabledContracts = Configuration::get($configKey);
         if (!empty($enabledContracts) && json_decode($enabledContracts) !== false) {
             $enabledContractsList = json_decode($enabledContracts);
             if ($contractNumberOnly && is_array($enabledContractsList)) {
@@ -1182,4 +1188,5 @@ class PaylinePaymentGateway
         }
         return $enabledContractsList;
     }
+
 }

@@ -204,3 +204,7 @@ $_MODULE['<{payline}prestashop>subscriptions_d95cf4ab2cbf1dfb63f066b50558b07d'] 
 $_MODULE['<{payline}prestashop>subscriptions_7cccfbbbe926f29228dedf5b436ea7ac'] = 'Votre abonnement a été annulé.';
 $_MODULE['<{payline}prestashop>subscriptions_4c3ff6843d5de7b8160cf575b893634d'] = 'Une erreur s\'est produite lors de l\'annulation votre abonnement. Veuillez nous contacter.';
 $_MODULE['<{payline}prestashop>subscriptions_42af0ecf606ae5dd141e79c0dd5f5484'] = 'Vous n\'avez aucun abonnement.';
+$_MODULE['<{payline}prestashop>payline_a956c42bbbb772474804eeba8c44a43f'] = 'Utiliser les mêmes contrats alternatifs que les principaux';
+$_MODULE['<{payline}prestashop>payline_df7274a4950720e746cd1173a85a0533'] = 'Remboursement Payline en ligne';
+$_MODULE['<{payline}prestashop>payline_a1ebf3e0b374466ae41c68a6e9e709ae'] = 'Veuillez essayer de rembourser un montant compris entre 0 et le montant total de la commande payée';
+$_MODULE['<{payline}prestashop>payline_2970b1e490aba1c36f70da251f64e72f'] = 'Produits alimentaires éligibles aux TRD';
