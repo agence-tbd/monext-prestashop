@@ -2,6 +2,8 @@
 ===
 <h2>released on 2023-05-10</h2>
 <ul>
+<li>Partial refund</li>
+<li>Normalize REC payment</li>
 </ul>
 
 2.3.4
