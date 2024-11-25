@@ -249,7 +249,7 @@ class payline extends PaymentModule
             || !$this->registerHook('actionAdminOrdersListingResultsModifier')
             || !$this->registerHook('actionObjectOrderSlipAddBefore')
             || !$this->registerHook('actionOrderStatusUpdate')
-            || (version_compare(_PS_VERSION_, '1.7.0.0', '<') && !$this->registerHook('displayPayment'))
+            || ($this->prestaVersionCompare('<') && !$this->registerHook('displayPayment'))
             || !$this->registerHook('displayPaymentReturn')
             || !$this->registerHook('paymentOptions')
             || !$this->registerHook('actionObjectOrderDetailUpdateAfter')
@@ -285,7 +285,7 @@ class payline extends PaymentModule
             $this->context->controller->errors[] = $this->l('Please try to use another payment method or another credit card.');
         }
         // Add front.css on OPC
-        if ($this->isPaymentAvailable() && version_compare(_PS_VERSION_, '1.7.0.0', '<') && $this->context->controller instanceof OrderOpcController) {
+        if ($this->isPaymentAvailable() && $this->prestaVersionCompare('<') && $this->context->controller instanceof OrderOpcController) {
             $this->context->controller->addCSS($this->_path.'views/css/front.css');
         }
     }
@@ -540,7 +540,7 @@ class payline extends PaymentModule
         $this->context->smarty->assign(array(
             'subscriptionControllerLink' => $this->context->link->getModuleLink('payline', 'subscriptions', array(), true),
         ));
-        if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
+        if ($this->prestaVersionCompare()) {
             $output .= $this->context->smarty->fetch($this->local_path.'views/templates/hook/1.7/customer_account.tpl');
         } else {
             $output .= $this->display(__FILE__, 'customer_account.tpl');
@@ -644,7 +644,7 @@ class payline extends PaymentModule
                     'allowRefund' => $allowRefund,
                     'allowReset' => $allowReset,
                 ));
-                if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
+                if ($this->prestaVersionCompare()) {
                     $output .= $this->context->smarty->fetch($this->local_path.'views/templates/hook/admin_order.tpl');
                 } else {
                     $output .= $this->display(__FILE__, 'admin_order.tpl');
@@ -869,7 +869,7 @@ class payline extends PaymentModule
     public function hookDisplayPaymentReturn($params)
     {
         // Check if module is enabled and PS < 1.7
-        if (!$this->active || version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
+        if (!$this->active || $this->prestaVersionCompare()) {
             return;
         }
 
@@ -1126,7 +1126,7 @@ class payline extends PaymentModule
     {
         // Check if module is enabled and payment gateway is configured for at least one payment method
         // Check if PS < 1.7
-        if (!$this->isPaymentAvailable() || version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
+        if (!$this->isPaymentAvailable() || $this->prestaVersionCompare()) {
             return;
         }
 
@@ -1354,7 +1354,7 @@ class payline extends PaymentModule
             return false;
         }
         // Check if current cart currency is allowed
-        if (version_compare(_PS_VERSION_, '1.7.0.0', '>=') && !$this->checkAllowedCurrency($this->context->cart)) {
+        if ($this->prestaVersionCompare() && !$this->checkAllowedCurrency($this->context->cart)) {
             return false;
         }
 
@@ -1495,8 +1495,8 @@ class payline extends PaymentModule
         }
 
         $this->context->smarty->assign('payline_id_shop', (int)$this->context->shop->id);
-        $this->context->smarty->assign('payline_is_ps16', version_compare(_PS_VERSION_, '1.7.0.0', '<'));
-        $this->context->smarty->assign('payline_is_ps17', version_compare(_PS_VERSION_, '1.7.0.0', '>='));
+        $this->context->smarty->assign('payline_is_ps16', $this->prestaVersionCompare('<'));
+        $this->context->smarty->assign('payline_is_ps17', $this->prestaVersionCompare());
         $this->context->smarty->assign('payline_active_tab', $activeTab);
         $this->context->smarty->assign('payline_api_status', Configuration::get('PAYLINE_API_STATUS'));
         $this->context->smarty->assign('payline_contracts_errors', $paylineCheckNoEnabledContract);
@@ -3196,5 +3196,18 @@ class payline extends PaymentModule
         $this->context->smarty->assign('payline_custom_amount_refund_indication', $this->l('Please add product quantity to refund and amount including tax'));
         $this->context->smarty->assign('payline_custom_amount_refund_shipping', $this->l('Add shipping amount including tax to payline refund'));
         return $this->context->smarty->fetch(_PS_MODULE_DIR_ . $this->name . '/views/templates/hook/partialRefund.tpl');
+    }
+
+    /**
+     * @param string $operator
+     * @param string $versionToCompare
+     * @return bool
+     */
+    protected function prestaVersionCompare($operator = ">=", $versionToCompare = '1.7.0.0')
+    {
+        if(version_compare(_PS_VERSION_, $versionToCompare, $operator)){
+            return true;
+        }
+        return false;
     }
 }
