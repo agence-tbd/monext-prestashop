@@ -218,6 +218,25 @@ class payline extends PaymentModule
     }
 
     /**
+     * Install this Ajax controller
+     * @since 2.3.6
+     * @return bool
+     */
+    public function installTab()
+    {
+        $tab = new Tab();
+        $tab->class_name = 'AdminPaylineLogsAjax';
+        $tab->module = $this->name;
+        $tab->active = true;
+        $tab->id_parent = -1;
+        $tab->name = array_fill_keys(
+            Language::getIDs(false),
+            $this->displayName
+        );
+        return $tab->add();
+    }
+
+    /**
      * Module install
      * @since 2.0.0
      * @return bool
@@ -258,6 +277,7 @@ class payline extends PaymentModule
             || !$this->createCustomOrderState()
             // Install tables
             || !$this->createTables()
+            || !$this->installTab()
         ) {
             return false;
         }
@@ -1506,6 +1526,7 @@ class payline extends PaymentModule
         $this->context->smarty->assign('payline_recurring_payment_configuration', $this->renderForm('recurring-web-payment'));
         $this->context->smarty->assign('payline_subscribe_payment_configuration', $this->renderForm('subscribe-payment'));
         $this->context->smarty->assign('payline_contracts_configuration', $this->renderForm('contracts'));
+        $this->context->smarty->assign('payline_logs_viewing', $this->renderForm('logs'));
         return $this->context->smarty->fetch($this->local_path.'views/templates/admin/configure.tpl');
     }
 
@@ -2302,7 +2323,69 @@ class payline extends PaymentModule
                     ),
                 ),
             );
+        } elseif ($tabName == 'logs') {
+            $logsFiles = $this->getPaylineLogsFilesList();
+
+            Media::addJsDef([
+                'logs_viewer_controller_url' => $this->context->link->getAdminLink('AdminPaylineLogsAjax'),
+                'logs_viewer_controller' => 'AdminPaylineLogsAjax',
+            ]);
+
+            return array(
+                'form' => array(
+                    'legend' => array(
+                        'title' => $this->l('Payline logs'),
+                        'icon' => 'icon-file-text',
+                    ),
+                    'input' => array(
+
+                        array(
+                            'type' => 'log-files',
+                            'name' => 'PAYLINE_LOGS_FILES',
+                            'label' => '',
+                            'col' => 12,
+                            'logsFilesList' => $logsFiles,
+                        ),
+
+                        array(
+                            'type' => 'log-data',
+                            'name' => 'PAYLINE_LOGS_LINES',
+                            'label' => '',
+                            'col' => 12,
+                        ),
+                    ),
+                ),
+            );
         }
+    }
+
+    /**
+     * Return list of payline logs
+     * @since 2.3.6
+     * @return array
+     */
+    public function getPaylineLogsFilesList()
+    {
+        $logsFiles = [];
+        $directoryPath = $this->getPaylineLogsDirectory();
+        if (is_dir($directoryPath)) {
+            $files = scandir($directoryPath, SCANDIR_SORT_DESCENDING);
+            $files = array_diff($files, array('.', '..')); // Exclure les entrées spéciales
+            foreach ($files as $file) {
+                $logsFiles[] = pathinfo($file, PATHINFO_FILENAME);
+            }
+        }
+        return $logsFiles;
+    }
+
+    /**
+     * Return payline logs directory
+     * @since 2.3.6
+     * @return string
+     */
+    public function getPaylineLogsDirectory()
+    {
+        return _PS_ROOT_DIR_.'/var/logs/' . $this->name . DIRECTORY_SEPARATOR;
     }
 
     /**

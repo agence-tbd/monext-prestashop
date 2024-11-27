@@ -1,18 +1,63 @@
 {
         "packages": [
                 {
-                        "name": "monext/monext-php",
-                        "version": "4.77.0",
-                        "version_normalized": "4.77.0.0",
+                        "name": "ddtraceweb/monolog-parser",
+                        "version": "1.3.1",
+                        "version_normalized": "1.3.1.0",
                         "source": {
                                 "type": "git",
-                                "url": "https://github.com/Monext/monext-php-sdk.git",
-                                "reference": "091203d88aa2523549cce4586c5471a63a155e5b"
+                                "url": "https://github.com/ddtraceweb/monolog-parser.git",
+                                "reference": "d6715cb28700d691b20d713626856aacd3d5606c"
                         },
                         "dist": {
                                 "type": "zip",
-                                "url": "https://api.github.com/repos/Monext/monext-php-sdk/zipball/091203d88aa2523549cce4586c5471a63a155e5b",
-                                "reference": "091203d88aa2523549cce4586c5471a63a155e5b",
+                                "url": "https://api.github.com/repos/ddtraceweb/monolog-parser/zipball/d6715cb28700d691b20d713626856aacd3d5606c",
+                                "reference": "d6715cb28700d691b20d713626856aacd3d5606c",
+                                "shasum": ""
+                        },
+                        "require": {
+                                "monolog/monolog": "1.*"
+                        },
+                        "require-dev": {
+                                "phpunit/phpunit": "3.7.*"
+                        },
+                        "time": "2020-07-23T13:38:12+00:00",
+                        "type": "library",
+                        "installation-source": "dist",
+                        "autoload": {
+                                "psr-0": {
+                                        "Dubture": "src/"
+                                }
+                        },
+                        "notification-url": "https://packagist.org/downloads/",
+                        "license": [
+                                "MIT"
+                        ],
+                        "authors": [
+                                {
+                                        "name": "Robert Gruendler",
+                                        "email": "r.gruendler@gmail.com"
+                                }
+                        ],
+                        "description": "A parser for monolog log entries",
+                        "support": {
+                                "source": "https://github.com/ddtraceweb/monolog-parser/tree/master"
+                        },
+                        "install-path": "../ddtraceweb/monolog-parser"
+                },
+                {
+                        "name": "monext/payline-sdk",
+                        "version": "4.75",
+                        "version_normalized": "4.75.0.0",
+                        "source": {
+                                "type": "git",
+                                "url": "https://github.com/PaylineByMonext/payline-php-sdk.git",
+                                "reference": "20dc5afe94c79cc115cc384cedaaf39804212115"
+                        },
+                        "dist": {
+                                "type": "zip",
+                                "url": "https://api.github.com/repos/PaylineByMonext/payline-php-sdk/zipball/20dc5afe94c79cc115cc384cedaaf39804212115",
+                                "reference": "20dc5afe94c79cc115cc384cedaaf39804212115",
                                 "shasum": ""
                         },
                         "require": {
@@ -24,7 +69,7 @@
                                 "php": ">=5.6",
                                 "symfony/cache": ">=3.4"
                         },
-                        "time": "2024-09-27T15:57:57+00:00",
+                        "time": "2023-07-26T08:14:35+00:00",
                         "type": "library",
                         "installation-source": "dist",
                         "autoload": {
@@ -38,9 +83,9 @@
                         ],
                         "authors": [
                                 {
-                                        "name": "Cyrille HEIT",
-                                        "email": "cyrille.heit@monext.net",
-                                        "homepage": "http://www.monext.net"
+                                        "name": "Fabien SUAREZ",
+                                        "email": "fabien.suarez@payline.com",
+                                        "homepage": "http://www.payline.com"
                                 },
                                 {
                                         "name": "Vincent Pietri",
@@ -48,20 +93,13 @@
                                         "homepage": "https://www.tbdgroup.com/"
                                 }
                         ],
-                        "description": "Monext PHP Library",
+                        "description": "Payline library for PHP",
                         "keywords": [
                                 "Monext",
                                 "Payline",
-                                "online",
                                 "payment"
                         ],
-                        "support": {
-                                "docs": "https://docs.monext.fr/display/DT",
-                                "email": "support@payline.com",
-                                "issues": "https://github.com/Monext/monext-php-sdk/issues",
-                                "source": "https://github.com/Monext/monext-php-sdk/tree/4.77.0"
-                        },
-                        "install-path": "../monext/monext-php"
+                        "install-path": "../monext/payline-sdk"
                 },
                 {
                         "name": "monolog/monolog",

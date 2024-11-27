@@ -4,11 +4,52 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c3a81a40647058e4221346259d809e07",
     "packages": [
         {
-            "name": "monext/monext-php",
-            "version": "4.77.0",
+            "name": "ddtraceweb/monolog-parser",
+            "version": "1.3.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/ddtraceweb/monolog-parser.git",
+                "reference": "d6715cb28700d691b20d713626856aacd3d5606c"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/ddtraceweb/monolog-parser/zipball/d6715cb28700d691b20d713626856aacd3d5606c",
+                "reference": "d6715cb28700d691b20d713626856aacd3d5606c",
+                "shasum": ""
+            },
+            "require": {
+                "monolog/monolog": "1.*"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "3.7.*"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Dubture": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Robert Gruendler",
+                    "email": "r.gruendler@gmail.com"
+                }
+            ],
+            "description": "A parser for monolog log entries",
+            "support": {
+                "source": "https://github.com/ddtraceweb/monolog-parser/tree/master"
+            },
+            "time": "2020-07-23T13:38:12+00:00"
+        },
+        {
+          "name": "monext/monext-php",
+          "version": "4.77.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Monext/monext-php-sdk.git",

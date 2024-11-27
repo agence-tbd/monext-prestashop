@@ -515,7 +515,7 @@ class PaylinePaymentGateway
         $result = $instance->doWebPayment($params);
 
         if ($error = self::getErrorResponse($result)) {
-            $instance->getLogger()->addError(json_encode($error));
+            $instance->getLogger()->addError(__FUNCTION__ , $error);
             return array(null, $params);
         }
 
@@ -553,7 +553,7 @@ class PaylinePaymentGateway
         $result = $instance->doRecurrentWalletPayment($params);
 
         if ($error = self::getErrorResponse($result)) {
-            $instance->getLogger()->addError(json_encode($error));
+            $instance->getLogger()->addError(__FUNCTION__ , $error);
         }
 
         return $result;
@@ -843,7 +843,7 @@ class PaylinePaymentGateway
         $result = $instance->getTransactionDetails($params);
 
         if ($error = self::getErrorResponse($result)) {
-            $instance->getLogger()->addError(json_encode($error));
+            $instance->getLogger()->addError(__FUNCTION__ , $error);
         } else {
             // Loop into result, format and sort some fields
             self::formatAndSortResult($result);
@@ -892,7 +892,7 @@ class PaylinePaymentGateway
         $result = $instance->disablePaymentRecord($params);
 
         if ($error = self::getErrorResponse($result)) {
-            $instance->getLogger()->addError(json_encode($error));
+            $instance->getLogger()->addError(__FUNCTION__ , $error);
         }
 
         return $result;
@@ -962,7 +962,7 @@ class PaylinePaymentGateway
         }
 
         if ($error = self::getErrorResponse($result)) {
-            $instance->getLogger()->addError(json_encode($error));
+            $instance->getLogger()->addError(__FUNCTION__ , $error);
         }
 
         return $result;
@@ -999,7 +999,7 @@ class PaylinePaymentGateway
         $result = $instance->doRefund($params);
 
         if ($error = self::getErrorResponse($result)) {
-            $instance->getLogger()->addError(json_encode($error));
+            $instance->getLogger()->addError(__FUNCTION__ , $error);
         }
 
         return $result;
@@ -1027,7 +1027,7 @@ class PaylinePaymentGateway
         $result = $instance->doReset($params);
 
         if ($error = self::getErrorResponse($result)) {
-            $instance->getLogger()->addError(json_encode($error));
+            $instance->getLogger()->addError(__FUNCTION__ , $error);
         }
 
         return $result;

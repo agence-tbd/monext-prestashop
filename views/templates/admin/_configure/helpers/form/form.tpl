@@ -89,7 +89,20 @@
 				</div>
 			</div>
 		</div>
-	{else}
+  {elseif $input.type == 'log-files'}
+    <select name="logs-files-list-select" id="logs-files-list-select">
+      <option value="">-- {l s='Please select a log file' mod='payline'} --</option>
+      {foreach from=$input.logsFilesList item=payline_logs_files}
+        <option value="{$payline_logs_files|escape:'html':'UTF-8'}">{$payline_logs_files}</option>
+      {/foreach}
+    </select>
+  {elseif $input.type == 'log-data'}
+    <div id="log_container" class="card log_container">
+      <div id="log_display" class="card-body log_display">
+        <p>{l s='Please select a log file' mod='payline'}</p>
+      </div>
+    </div>
+  {else}
 		{$smarty.block.parent}
 	{/if}
 {/block}

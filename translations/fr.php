@@ -208,3 +208,7 @@ $_MODULE['<{payline}prestashop>payline_a956c42bbbb772474804eeba8c44a43f'] = 'Uti
 $_MODULE['<{payline}prestashop>payline_df7274a4950720e746cd1173a85a0533'] = 'Remboursement Payline en ligne';
 $_MODULE['<{payline}prestashop>payline_a1ebf3e0b374466ae41c68a6e9e709ae'] = 'Veuillez essayer de rembourser un montant compris entre 0 et le montant total de la commande payée';
 $_MODULE['<{payline}prestashop>payline_2970b1e490aba1c36f70da251f64e72f'] = 'Produits alimentaires éligibles aux TRD';
+$_MODULE['<{payline}prestashop>payline_76477611180074068611d3d46eb22027'] = 'Logs Payline';
+$_MODULE['<{payline}prestashop>payline_44a3f08404cbf7eb027b8a3385beeebf'] = 'Visionneur de logs Payline';
+$_MODULE['<{payline}prestashop>form_dd0821c4d98fc1a8b1aa15099df1aa92'] = 'Veuillez sélectionner un fichier de log';
+$_MODULE['<{payline}prestashop>configure_cb145c15179d76a4607a193b0d8f0fa2'] = 'Visionneur de logs';

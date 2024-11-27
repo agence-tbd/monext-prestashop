@@ -16,3 +16,24 @@
 #payline-contracts-list li:not(.payline-active-contract) {
 	border-color: orange;
 }
+
+#log_container {
+  overflow: hidden;
+  height: 410px;
+  padding: 5px;
+  margin-top: 10px;
+}
+
+#log_display {
+  width: 100%;
+  height: 400px;
+  overflow: auto;
+  margin: 0;
+  padding: 6px;
+  background: black;
+  color: #2EC029EC
+}
+
+#log_display details[open] {
+  padding: 4px;
+}
