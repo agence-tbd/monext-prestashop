@@ -16,13 +16,13 @@ jobs:
         run: composer global require prestashop/autoindex
       - name: Generate index.php
         run: ~/.composer/vendor/bin/autoindex
-#      - name: Move to rename
-#        run: mv /home/runner/work/${{ github.event.repository.name }} /home/runner/work/payline
+      - name: Move to rename
+        run: mv /home/runner/work/${{ github.event.repository.name }} /home/runner/work/payline
       - name: Create & upload artifact
         uses: actions/upload-artifact@v4.4.3
         with:
-          name: ${{ github.event.repository.name }}
-#          name: payline
+#          name: ${{ github.event.repository.name }}
+          name: payline
           path: /home/runner/work/payline
 #          path: /home/runner/work/${{ github.event.repository.name }}
 
