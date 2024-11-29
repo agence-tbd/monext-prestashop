@@ -5,15 +5,16 @@ jobs:
   deploy:
     name: build dependencies & create artifact
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: /home/runner/work/payline
+#    defaults:
+#      run:
+#        working-directory: /home/runner/work/payline
     steps:
+      - name: create release folder
+      - run: mkdir release
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          path: /home/runner/work/payline
-          set-safe-directory: /home/runner/work/payline
+          path: ./release
       - name: Install composer dependencies
         run: composer install --no-dev -o
       - name: Clean-up project
@@ -22,14 +23,15 @@ jobs:
         run: composer global require prestashop/autoindex
       - name: Generate index.php
         run: ~/.composer/vendor/bin/autoindex
-      - name: Move to rename
-        run: cp -r /home/runner/work/${{ github.event.repository.name }} /home/runner/work/payline
+#      - name: Move to rename
+#        run: cp -r /home/runner/work/${{ github.event.repository.name }} /home/runner/work/payline
       - name: Create & upload artifact
         uses: actions/upload-artifact@v4.4.3
         with:
 #          name: ${{ github.event.repository.name }}
           name: payline
-          path: /home/runner/work/payline
+#          path: /home/runner/work/payline
+          path: /home/runner/work/${{ github.event.repository.name }}/release
 #          path: /home/runner/work/${{ github.event.repository.name }}
 
 #  build-and-release-draft:
