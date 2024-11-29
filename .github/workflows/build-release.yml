@@ -26,14 +26,14 @@ jobs:
 #      - name: Move to rename
 #        run: cp -r /home/runner/work/${{ github.event.repository.name }} /home/runner/work/payline
       - name: LS
-        run: pwd && ls -lisa && ls -lisa release && ls -lisa /home/runner/work/${{ github.event.repository.name }} && ls -lisa /home/runner/work/${{ github.event.repository.name }}/release
+        run: pwd && ls -lisa && ls -lisa release && ls -lisa /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}
       - name: Create & upload artifact
         uses: actions/upload-artifact@v4.4.3
         with:
 #          name: ${{ github.event.repository.name }}
           name: payline
 #          path: /home/runner/work/payline
-          path: /home/runner/work/${{ github.event.repository.name }}/release
+          path: release
 #          path: /home/runner/work/${{ github.event.repository.name }}
 
 #  build-and-release-draft:
