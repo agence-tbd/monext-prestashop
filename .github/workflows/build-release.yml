@@ -10,7 +10,7 @@ jobs:
 #        working-directory: /home/runner/work/payline
     steps:
       - name: create release folder
-      - run: mkdir release
+        run: mkdir release
       - name: Checkout
         uses: actions/checkout@v4
         with:
