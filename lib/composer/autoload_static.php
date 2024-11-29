@@ -73,7 +73,7 @@ class ComposerStaticInit5b2671a2d84ca6791d180c9bf3321a61
         ),
         'Payline\\' => 
         array (
-            0 => __DIR__ . '/..' . '/monext/payline-sdk/src/Payline',
+            0 => __DIR__ . '/..' . '/monext/monext-php/src/Payline',
         ),
         'Monolog\\' => 
         array (
@@ -83,6 +83,7 @@ class ComposerStaticInit5b2671a2d84ca6791d180c9bf3321a61
 
     public static $classMap = array (
         'Attribute' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
+        'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
         'JsonException' => __DIR__ . '/..' . '/symfony/polyfill-php73/Resources/stubs/JsonException.php',
         'PhpToken' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/PhpToken.php',
         'Stringable' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Stringable.php',
