@@ -21,18 +21,9 @@ jobs:
           cd ../
           zip -r ${{ github.event.repository.name }}-${{ github.ref_name }}.zip . -x "payline/.*" -x "payline/composer.*"
 
-#      - name: Upload artifact to GitHub release
-#        uses: actions/upload-release-asset@v1.0.2
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        with:
-#          upload_url: ${{ github.event.release.upload_url }}
-#          asset_path: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/module.zip
-#          asset_name: ${{ github.event.repository.name }}-${{ github.ref_name }}.zip
-#          asset_content_type: application/zip
-
       - name: Upload asset using gh CLI
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ZIP_PATH: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/${{ github.event.repository.name }}-${{ github.ref_name }}.zip
         run: |
-          gh release upload ${{ github.event.release.tag_name }} /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/${{ github.event.repository.name }}-${{ github.ref_name }}.zip
+          gh release upload ${{ github.event.release.tag_name }} $ZIP_PATH
