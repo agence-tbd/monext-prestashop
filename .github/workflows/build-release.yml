@@ -1,0 +1,29 @@
+name: Build package
+on:
+  release:
+    types: [published]
+
+jobs:
+  deploy:
+    name: build dependencies & create artifact
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline
+
+      - name: Zip artifact
+        run: |
+          cd ../
+          zip -r ${{ github.event.repository.name }}-${{ github.ref_name }}.zip . -x "payline/.*" -x "payline/composer.*"
+
+      - name: Upload asset using gh CLI
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ZIP_PATH: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/${{ github.event.repository.name }}-${{ github.ref_name }}.zip
+        run: |
+          gh release upload ${{ github.event.release.tag_name }} $ZIP_PATH
