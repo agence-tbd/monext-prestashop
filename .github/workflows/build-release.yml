@@ -19,14 +19,21 @@ jobs:
       - name: Zip artifact
         run: |
           cd ../
-          zip -r module.zip . -x ".*" -x "composer.*"
+          zip -r ${{ github.event.repository.name }}-${{ github.ref_name }}.zip . -x ".*" -x "composer.*"
 
-      - name: Upload artifact to GitHub release
-        uses: actions/upload-release-asset@v1.0.2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#      - name: Upload artifact to GitHub release
+#        uses: actions/upload-release-asset@v1.0.2
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          upload_url: ${{ github.event.release.upload_url }}
+#          asset_path: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/module.zip
+#          asset_name: ${{ github.event.repository.name }}-${{ github.ref_name }}.zip
+#          asset_content_type: application/zip
+
+      - name: Upload Assets to Release with a wildcard
+        uses: csexton/release-asset-action@v3
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/module.zip
-          asset_name: ${{ github.event.repository.name }}-${{ github.ref_name }}.zip
-          asset_content_type: application/zip
+          pattern: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/${{ github.event.repository.name }}-${{ github.ref_name }}.zip
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          release-url: ${{ steps.create_release.outputs.upload_url }}
