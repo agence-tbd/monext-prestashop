@@ -23,7 +23,8 @@ jobs:
 
       - name: Clean-up project
         uses: PrestaShopCorp/github-action-clean-before-deploy@v2.0
-#        with:
+        with:
+          paths: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline
 #          paths: ./payline
 
       - name: Prepare auto-index tool
