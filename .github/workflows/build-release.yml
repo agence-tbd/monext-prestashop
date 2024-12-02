@@ -27,18 +27,18 @@ jobs:
       - name: Install composer dependencies
         run: composer install --no-dev -o
 
-#      - name: Create & upload artifact
-#        uses: actions/upload-artifact@v4.4.3
-#        with:
-#          name: ${{ github.event.repository.name }}-${{ github.ref_name }}
-#          path: |
-#            /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}
-#            !/home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline/composer.*
+      - name: Create & upload artifact
+        uses: actions/upload-artifact@v4.4.3
+        with:
+          name: ${{ github.event.repository.name }}-${{ github.ref_name }}
+          path: |
+            /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}
+            !/home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline/composer.*
 
-
-      - name: Zip artifact
-        run: |
-          zip -r artifact.zip . -x "composer.*"
+      - uses: actions/download-artifact@v4
+#      - name: Zip artifact
+#        run: |
+#          zip -r artifact.zip . -x "composer.*"
 
       - name: LS
         run: pwd && ls -lisa && cd ../ && ls -lisa
