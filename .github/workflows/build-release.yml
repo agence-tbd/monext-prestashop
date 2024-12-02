@@ -5,9 +5,9 @@ jobs:
   deploy:
     name: build dependencies & create artifact
     runs-on: ubuntu-latest
-#    defaults:
-#      run:
-#        working-directory: /home/runner/work/payline
+    defaults:
+      run:
+        working-directory: /home/runner/work/${{ github.event.repository.name }}/payline
     steps:
 #      - name: create payline folder
 #        run: mkdir payline
@@ -39,7 +39,6 @@ jobs:
 
       - name: Create & upload artifact
         uses: actions/upload-artifact@v4.4.3
-        working-directory: /home/runner/work/${{ github.event.repository.name }}/payline
         with:
           name: ${{ github.event.repository.name }}
 #          name: payline
