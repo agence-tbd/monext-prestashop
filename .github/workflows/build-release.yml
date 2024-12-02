@@ -1,8 +1,8 @@
 name: Build
-on: [push, pull_request]
-#on:
-#  release:
-#    types: [published]
+#on: [push, pull_request]
+on:
+  release:
+    types: [published]
 
 jobs:
   deploy:
@@ -27,26 +27,28 @@ jobs:
       - name: Install composer dependencies
         run: composer install --no-dev -o
 
-      - name: Create & upload artifact
-        uses: actions/upload-artifact@v4.4.3
-        with:
-          name: ${{ github.event.repository.name }}-${{ github.ref_name }}
-          path: |
-            /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}
-            !/home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline/composer.*
+#      - name: Create & upload artifact
+#        uses: actions/upload-artifact@v4.4.3
+#        with:
+#          name: ${{ github.event.repository.name }}-${{ github.ref_name }}
+#          path: |
+#            /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}
+#            !/home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline/composer.*
 
 #      - uses: actions/download-artifact@v4
-#      - name: Zip artifact
-#        run: |
-#          zip -r artifact.zip . -x "composer.*"
+
+      - name: Zip artifact
+        run: |
+          cd ../
+          zip -r ${{ github.event.repository.name }}-${{ github.ref_name }}.zip . -x "composer.*"
 
       - name: LS
         run: pwd && ls -lisa && cd ../ && ls -lisa
 
-#      - name: Upload artifact to GitHub release
-#        uses: actions/upload-release-asset@v1
-#        with:
-#          upload_url: ${{ github.event.release.upload_url }}
-#          asset_path: artifact.zip
-#          asset_name: artifact.zip
-#          asset_content_type: application/zip
+      - name: Upload artifact to GitHub release
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/${{ github.event.repository.name }}-${{ github.ref_name }}.zip
+          asset_name: ${{ github.event.repository.name }}-${{ github.ref_name }}.zip
+          asset_content_type: application/zip
