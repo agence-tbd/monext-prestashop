@@ -14,8 +14,8 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v4
-#        with:
-#          path: ./payline
+        with:
+          path: /home/runner/work/${{ github.event.repository.name }}/payline
 
       - name: Install composer dependencies
 #        run: pwd && cd payline && pwd && composer install --no-dev -o
