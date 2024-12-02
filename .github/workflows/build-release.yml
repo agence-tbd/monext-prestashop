@@ -39,6 +39,7 @@ jobs:
 
       - name: Create & upload artifact
         uses: actions/upload-artifact@v4.4.3
+        working-directory: /home/runner/work/${{ github.event.repository.name }}/payline
         with:
           name: ${{ github.event.repository.name }}
 #          name: payline
