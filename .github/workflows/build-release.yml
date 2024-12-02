@@ -23,7 +23,7 @@ jobs:
           name: ${{ github.event.repository.name }}-${{ github.ref_name }}
 #          path: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline
           path: |
-            /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline
+            /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}
             !/home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline/composer.*
 
 #  build-and-release-draft:
