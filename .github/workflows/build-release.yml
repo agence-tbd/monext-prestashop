@@ -12,19 +12,21 @@ jobs:
       run:
         working-directory: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline
     steps:
-      - name: Dump GitHub context
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
-        run: |
-          echo "$GITHUB_CONTEXT"
-#      - name: Checkout
-#        uses: actions/checkout@v4
-#        with:
-#          path: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline
-#
-#      - name: Install composer dependencies
-#        run: composer install --no-dev -o
-#
+#      - name: Dump GitHub context
+#        env:
+#          GITHUB_CONTEXT: ${{ toJson(github) }}
+#        run: |
+#          echo "$GITHUB_CONTEXT"
+#          echo ${{ github.event.release.upload_url }}
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline
+
+      - name: Install composer dependencies
+        run: composer install --no-dev -o
+
 #      - name: Create & upload artifact
 #        uses: actions/upload-artifact@v4.4.3
 #        with:
@@ -32,3 +34,16 @@ jobs:
 #          path: |
 #            /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}
 #            !/home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline/composer.*
+
+
+      - name: Zip artifact
+        run: |
+          zip -r artifact.zip . -x "composer.*"
+
+      - name: Upload artifact to GitHub release
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./artifact.zip
+          asset_name: artifact-${{ github.ref_name }}.zip
+          asset_content_type: application/zip
