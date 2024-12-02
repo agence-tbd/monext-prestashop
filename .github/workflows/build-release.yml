@@ -1,5 +1,4 @@
-name: Build
-#on: [push, pull_request]
+name: Build package
 on:
   release:
     types: [published]
@@ -12,45 +11,22 @@ jobs:
       run:
         working-directory: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline
     steps:
-#      - name: Dump GitHub context
-#        env:
-#          GITHUB_CONTEXT: ${{ toJson(github) }}
-#        run: |
-#          echo "$GITHUB_CONTEXT"
-#          echo ${{ github.event.release.upload_url }}
-
       - name: Checkout
         uses: actions/checkout@v4
         with:
           path: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline
 
-      - name: Install composer dependencies
-        run: composer install --no-dev -o
-
-#      - name: Create & upload artifact
-#        uses: actions/upload-artifact@v4.4.3
-#        with:
-#          name: ${{ github.event.repository.name }}-${{ github.ref_name }}
-#          path: |
-#            /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}
-#            !/home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline/composer.*
-
-#      - uses: actions/download-artifact@v4
-
       - name: Zip artifact
         run: |
           cd ../
-          zip -r ${{ github.event.repository.name }}-${{ github.ref_name }}.zip . -x "composer.*"
-
-      - name: LS
-        run: pwd && ls -lisa && cd ../ && ls -lisa
+          zip -r module.zip . -x ".*" -x "composer.*"
 
       - name: Upload artifact to GitHub release
-        uses: actions/upload-release-asset@v1
+        uses: actions/upload-release-asset@v1.0.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/${{ github.event.repository.name }}-${{ github.ref_name }}.zip
+          asset_path: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/module.zip
           asset_name: ${{ github.event.repository.name }}-${{ github.ref_name }}.zip
           asset_content_type: application/zip
