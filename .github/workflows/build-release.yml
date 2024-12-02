@@ -19,22 +19,22 @@ jobs:
 
       - name: Install composer dependencies
 #        run: pwd && cd payline && pwd && composer install --no-dev -o
-        run: composer install --no-dev -o
+        run: composer install --no-dev -o && pwd && ls -lisa
 
-      - name: Clean-up project
-        uses: PrestaShopCorp/github-action-clean-before-deploy@v2.0
-        with:
-#          paths: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline
-          working-directory: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline
-#          paths: ./payline
-
-      - name: Prepare auto-index tool
-#        run: pwd && composer global require prestashop/autoindex
-        run: composer global require prestashop/autoindex
-
-      - name: Generate index.php
-#        run: pwd && ~/.composer/vendor/bin/autoindex && pwd
-        run: ~/.composer/vendor/bin/autoindex
+#      - name: Clean-up project
+#        uses: PrestaShopCorp/github-action-clean-before-deploy@v2.0
+#        with:
+##          paths: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline
+#          working-directory: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline
+##          paths: ./paylines
+#
+#      - name: Prepare auto-index tool
+##        run: pwd && composer global require prestashop/autoindex
+#        run: composer global require prestashop/autoindex
+#
+#      - name: Generate index.php
+##        run: pwd && ~/.composer/vendor/bin/autoindex && pwd
+#        run: ~/.composer/vendor/bin/autoindex
 
 #      - name: Move to rename
 #        run: mv /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }} /home/runner/work/${{ github.event.repository.name }}/payline
