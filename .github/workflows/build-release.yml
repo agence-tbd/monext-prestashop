@@ -9,46 +9,19 @@ jobs:
       run:
         working-directory: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline
     steps:
-#      - name: create payline folder
-#        run: mkdir payline
-
       - name: Checkout
         uses: actions/checkout@v4
         with:
           path: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline
 
       - name: Install composer dependencies
-#        run: pwd && cd payline && pwd && composer install --no-dev -o
-        run: composer install --no-dev -o && pwd && ls -lisa
-
-#      - name: Clean-up project
-#        uses: PrestaShopCorp/github-action-clean-before-deploy@v2.0
-#        with:
-##          paths: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline
-#          working-directory: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline
-##          paths: ./paylines
-#
-#      - name: Prepare auto-index tool
-##        run: pwd && composer global require prestashop/autoindex
-#        run: composer global require prestashop/autoindex
-#
-#      - name: Generate index.php
-##        run: pwd && ~/.composer/vendor/bin/autoindex && pwd
-#        run: ~/.composer/vendor/bin/autoindex
-
-#      - name: Move to rename
-#        run: mv /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }} /home/runner/work/${{ github.event.repository.name }}/payline
+        run: composer install --no-dev -o
 
       - name: Create & upload artifact
         uses: actions/upload-artifact@v4.4.3
         with:
-          name: ${{ github.event.repository.name }}
-#          name: payline
+          name: ${{ github.event.repository.name }}-${{ github.base_ref }}
           path: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline
-#          path: /home/runner/work/${{ github.event.repository.name }}/payline
-#          path: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}
-#          path: /home/runner/work/payline
-#          path: /home/runner/work/${{ github.event.repository.name }}
 
 #  build-and-release-draft:
 #    name: Build & Release draft 1
