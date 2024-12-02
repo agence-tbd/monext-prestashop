@@ -33,7 +33,7 @@ jobs:
 #          name: ${{ github.event.repository.name }}
           name: payline
 #          path: /home/runner/work/payline
-          path: ../
+          path: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/release
 #          path: /home/runner/work/${{ github.event.repository.name }}
 
 #  build-and-release-draft:
