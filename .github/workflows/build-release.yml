@@ -20,8 +20,11 @@ jobs:
       - name: Create & upload artifact
         uses: actions/upload-artifact@v4.4.3
         with:
-          name: ${{ github.event.repository.name }}-${{ github.base_ref }}
-          path: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline
+          name: ${{ github.event.repository.name }}-${{ github.ref_name }}
+#          path: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline
+          path: |
+            /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline
+            !/home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline/composer.*
 
 #  build-and-release-draft:
 #    name: Build & Release draft 1
