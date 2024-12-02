@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: /home/runner/work/${{ github.event.repository.name }}/payline
+        working-directory: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline
     steps:
 #      - name: create payline folder
 #        run: mkdir payline
@@ -15,7 +15,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          path: /home/runner/work/${{ github.event.repository.name }}/payline
+          path: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline
 
       - name: Install composer dependencies
 #        run: pwd && cd payline && pwd && composer install --no-dev -o
