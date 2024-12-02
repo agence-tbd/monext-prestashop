@@ -26,7 +26,7 @@ jobs:
           paths: ./payline
 
       - name: Prepare auto-index tool
-        run: cd payline && composer global require prestashop/autoindex
+        run: cd /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline && composer global require prestashop/autoindex
 
       - name: Generate index.php
         run: ~/.composer/vendor/bin/autoindex
