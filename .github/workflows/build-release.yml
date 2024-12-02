@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: create payline folder
         run: mkdir payline
-        
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -22,6 +22,8 @@ jobs:
 
       - name: Clean-up project
         uses: PrestaShopCorp/github-action-clean-before-deploy@v2.0
+        with:
+          paths: ./payline
 
       - name: Prepare auto-index tool
         run: cd payline && composer global require prestashop/autoindex
