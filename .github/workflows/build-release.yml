@@ -18,7 +18,7 @@ jobs:
           path: ./payline
 
       - name: Install composer dependencies
-        run: cd payline && composer install --no-dev -o
+        run: pwd && cd payline && pwd && composer install --no-dev -o
 
       - name: Clean-up project
         uses: PrestaShopCorp/github-action-clean-before-deploy@v2.0
@@ -26,10 +26,10 @@ jobs:
           paths: ./payline
 
       - name: Prepare auto-index tool
-        run: composer global require prestashop/autoindex
+        run: pwd && composer global require prestashop/autoindex
 
       - name: Generate index.php
-        run: ~/.composer/vendor/bin/autoindex
+        run: pwd && ~/.composer/vendor/bin/autoindex && pwd
 
       - name: Create & upload artifact
         uses: actions/upload-artifact@v4.4.3
