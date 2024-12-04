@@ -62,7 +62,7 @@ Manual process
 
 Here are the main configuration fields for the payment method:
 
-* Configuration
+1. Configuration
     * Merchant ID
     * Access key
     * Environment
@@ -72,7 +72,7 @@ Here are the main configuration fields for the payment method:
   
 ![Screenshot showing payment method configuration in backoffice](doc/config.png)
 
-* Web payment
+2. Web payment
     * Title
     * Sub-title
     * Payment action
@@ -80,7 +80,7 @@ Here are the main configuration fields for the payment method:
 
 ![Screenshot showing payment method configuration in backoffice](doc/config_simple.png)
 
-* Contracts
+3. Contracts
 
 ![Screenshot showing payment method configuration in backoffice](doc/config_contract.png)
 
