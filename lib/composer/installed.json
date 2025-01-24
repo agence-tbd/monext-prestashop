@@ -1,831 +1,838 @@
 {
-        "packages": [
-                {
-                        "name": "ddtraceweb/monolog-parser",
-                        "version": "1.3.1",
-                        "version_normalized": "1.3.1.0",
-                        "source": {
-                                "type": "git",
-                                "url": "https://github.com/ddtraceweb/monolog-parser.git",
-                                "reference": "d6715cb28700d691b20d713626856aacd3d5606c"
-                        },
-                        "dist": {
-                                "type": "zip",
-                                "url": "https://api.github.com/repos/ddtraceweb/monolog-parser/zipball/d6715cb28700d691b20d713626856aacd3d5606c",
-                                "reference": "d6715cb28700d691b20d713626856aacd3d5606c",
-                                "shasum": ""
-                        },
-                        "require": {
-                                "monolog/monolog": "1.*"
-                        },
-                        "require-dev": {
-                                "phpunit/phpunit": "3.7.*"
-                        },
-                        "time": "2020-07-23T13:38:12+00:00",
-                        "type": "library",
-                        "installation-source": "dist",
-                        "autoload": {
-                                "psr-0": {
-                                        "Dubture": "src/"
-                                }
-                        },
-                        "notification-url": "https://packagist.org/downloads/",
-                        "license": [
-                                "MIT"
-                        ],
-                        "authors": [
-                                {
-                                        "name": "Robert Gruendler",
-                                        "email": "r.gruendler@gmail.com"
-                                }
-                        ],
-                        "description": "A parser for monolog log entries",
-                        "support": {
-                                "source": "https://github.com/ddtraceweb/monolog-parser/tree/master"
-                        },
-                        "install-path": "../ddtraceweb/monolog-parser"
-                },
-                {
-                        "name": "monext/payline-sdk",
-                        "version": "4.75",
-                        "version_normalized": "4.75.0.0",
-                        "source": {
-                                "type": "git",
-                                "url": "https://github.com/PaylineByMonext/payline-php-sdk.git",
-                                "reference": "20dc5afe94c79cc115cc384cedaaf39804212115"
-                        },
-                        "dist": {
-                                "type": "zip",
-                                "url": "https://api.github.com/repos/PaylineByMonext/payline-php-sdk/zipball/20dc5afe94c79cc115cc384cedaaf39804212115",
-                                "reference": "20dc5afe94c79cc115cc384cedaaf39804212115",
-                                "shasum": ""
-                        },
-                        "require": {
-                                "ext-curl": "*",
-                                "ext-mbstring": "*",
-                                "ext-openssl": "*",
-                                "ext-soap": "*",
-                                "monolog/monolog": "1.* || ~2.0 || ~3.0",
-                                "php": ">=5.6",
-                                "symfony/cache": ">=3.4"
-                        },
-                        "time": "2023-07-26T08:14:35+00:00",
-                        "type": "library",
-                        "installation-source": "dist",
-                        "autoload": {
-                                "psr-4": {
-                                        "Payline\\": "src/Payline"
-                                }
-                        },
-                        "notification-url": "https://packagist.org/downloads/",
-                        "license": [
-                                "LGPL-3.0"
-                        ],
-                        "authors": [
-                                {
-                                        "name": "Fabien SUAREZ",
-                                        "email": "fabien.suarez@payline.com",
-                                        "homepage": "http://www.payline.com"
-                                },
-                                {
-                                        "name": "Vincent Pietri",
-                                        "email": "vincent.pietri@tbdgroup.com",
-                                        "homepage": "https://www.tbdgroup.com/"
-                                }
-                        ],
-                        "description": "Payline library for PHP",
-                        "keywords": [
-                                "Monext",
-                                "Payline",
-                                "payment"
-                        ],
-                        "install-path": "../monext/payline-sdk"
-                },
-                {
-                        "name": "monolog/monolog",
-                        "version": "1.27.1",
-                        "version_normalized": "1.27.1.0",
-                        "source": {
-                                "type": "git",
-                                "url": "https://github.com/Seldaek/monolog.git",
-                                "reference": "904713c5929655dc9b97288b69cfeedad610c9a1"
-                        },
-                        "dist": {
-                                "type": "zip",
-                                "url": "https://api.github.com/repos/Seldaek/monolog/zipball/904713c5929655dc9b97288b69cfeedad610c9a1",
-                                "reference": "904713c5929655dc9b97288b69cfeedad610c9a1",
-                                "shasum": ""
-                        },
-                        "require": {
-                                "php": ">=5.3.0",
-                                "psr/log": "~1.0"
-                        },
-                        "provide": {
-                                "psr/log-implementation": "1.0.0"
-                        },
-                        "require-dev": {
-                                "aws/aws-sdk-php": "^2.4.9 || ^3.0",
-                                "doctrine/couchdb": "~1.0@dev",
-                                "graylog2/gelf-php": "~1.0",
-                                "php-amqplib/php-amqplib": "~2.4",
-                                "php-console/php-console": "^3.1.3",
-                                "phpstan/phpstan": "^0.12.59",
-                                "phpunit/phpunit": "~4.5",
-                                "ruflin/elastica": ">=0.90 <3.0",
-                                "sentry/sentry": "^0.13",
-                                "swiftmailer/swiftmailer": "^5.3|^6.0"
-                        },
-                        "suggest": {
-                                "aws/aws-sdk-php": "Allow sending log messages to AWS services like DynamoDB",
-                                "doctrine/couchdb": "Allow sending log messages to a CouchDB server",
-                                "ext-amqp": "Allow sending log messages to an AMQP server (1.0+ required)",
-                                "ext-mongo": "Allow sending log messages to a MongoDB server",
-                                "graylog2/gelf-php": "Allow sending log messages to a GrayLog2 server",
-                                "mongodb/mongodb": "Allow sending log messages to a MongoDB server via PHP Driver",
-                                "php-amqplib/php-amqplib": "Allow sending log messages to an AMQP server using php-amqplib",
-                                "php-console/php-console": "Allow sending log messages to Google Chrome",
-                                "rollbar/rollbar": "Allow sending log messages to Rollbar",
-                                "ruflin/elastica": "Allow sending log messages to an Elastic Search server",
-                                "sentry/sentry": "Allow sending log messages to a Sentry server"
-                        },
-                        "time": "2022-06-09T08:53:42+00:00",
-                        "type": "library",
-                        "installation-source": "dist",
-                        "autoload": {
-                                "psr-4": {
-                                        "Monolog\\": "src/Monolog"
-                                }
-                        },
-                        "notification-url": "https://packagist.org/downloads/",
-                        "license": [
-                                "MIT"
-                        ],
-                        "authors": [
-                                {
-                                        "name": "Jordi Boggiano",
-                                        "email": "j.boggiano@seld.be",
-                                        "homepage": "http://seld.be"
-                                }
-                        ],
-                        "description": "Sends your logs to files, sockets, inboxes, databases and various web services",
-                        "homepage": "http://github.com/Seldaek/monolog",
-                        "keywords": [
-                                "log",
-                                "logging",
-                                "psr-3"
-                        ],
-                        "funding": [
-                                {
-                                        "url": "https://github.com/Seldaek",
-                                        "type": "github"
-                                },
-                                {
-                                        "url": "https://tidelift.com/funding/github/packagist/monolog/monolog",
-                                        "type": "tidelift"
-                                }
-                        ],
-                        "install-path": "../monolog/monolog"
-                },
-                {
-                        "name": "psr/cache",
-                        "version": "1.0.1",
-                        "version_normalized": "1.0.1.0",
-                        "source": {
-                                "type": "git",
-                                "url": "https://github.com/php-fig/cache.git",
-                                "reference": "d11b50ad223250cf17b86e38383413f5a6764bf8"
-                        },
-                        "dist": {
-                                "type": "zip",
-                                "url": "https://api.github.com/repos/php-fig/cache/zipball/d11b50ad223250cf17b86e38383413f5a6764bf8",
-                                "reference": "d11b50ad223250cf17b86e38383413f5a6764bf8",
-                                "shasum": ""
-                        },
-                        "require": {
-                                "php": ">=5.3.0"
-                        },
-                        "time": "2016-08-06T20:24:11+00:00",
-                        "type": "library",
-                        "extra": {
-                                "branch-alias": {
-                                        "dev-master": "1.0.x-dev"
-                                }
-                        },
-                        "installation-source": "dist",
-                        "autoload": {
-                                "psr-4": {
-                                        "Psr\\Cache\\": "src/"
-                                }
-                        },
-                        "notification-url": "https://packagist.org/downloads/",
-                        "license": [
-                                "MIT"
-                        ],
-                        "authors": [
-                                {
-                                        "name": "PHP-FIG",
-                                        "homepage": "http://www.php-fig.org/"
-                                }
-                        ],
-                        "description": "Common interface for caching libraries",
-                        "keywords": [
-                                "cache",
-                                "psr",
-                                "psr-6"
-                        ],
-                        "install-path": "../psr/cache"
-                },
-                {
-                        "name": "psr/container",
-                        "version": "1.0.0",
-                        "version_normalized": "1.0.0.0",
-                        "source": {
-                                "type": "git",
-                                "url": "https://github.com/php-fig/container.git",
-                                "reference": "b7ce3b176482dbbc1245ebf52b181af44c2cf55f"
-                        },
-                        "dist": {
-                                "type": "zip",
-                                "url": "https://api.github.com/repos/php-fig/container/zipball/b7ce3b176482dbbc1245ebf52b181af44c2cf55f",
-                                "reference": "b7ce3b176482dbbc1245ebf52b181af44c2cf55f",
-                                "shasum": ""
-                        },
-                        "require": {
-                                "php": ">=5.3.0"
-                        },
-                        "time": "2017-02-14T16:28:37+00:00",
-                        "type": "library",
-                        "extra": {
-                                "branch-alias": {
-                                        "dev-master": "1.0.x-dev"
-                                }
-                        },
-                        "installation-source": "dist",
-                        "autoload": {
-                                "psr-4": {
-                                        "Psr\\Container\\": "src/"
-                                }
-                        },
-                        "notification-url": "https://packagist.org/downloads/",
-                        "license": [
-                                "MIT"
-                        ],
-                        "authors": [
-                                {
-                                        "name": "PHP-FIG",
-                                        "homepage": "http://www.php-fig.org/"
-                                }
-                        ],
-                        "description": "Common Container Interface (PHP FIG PSR-11)",
-                        "homepage": "https://github.com/php-fig/container",
-                        "keywords": [
-                                "PSR-11",
-                                "container",
-                                "container-interface",
-                                "container-interop",
-                                "psr"
-                        ],
-                        "install-path": "../psr/container"
-                },
-                {
-                        "name": "psr/log",
-                        "version": "1.1.4",
-                        "version_normalized": "1.1.4.0",
-                        "source": {
-                                "type": "git",
-                                "url": "https://github.com/php-fig/log.git",
-                                "reference": "d49695b909c3b7628b6289db5479a1c204601f11"
-                        },
-                        "dist": {
-                                "type": "zip",
-                                "url": "https://api.github.com/repos/php-fig/log/zipball/d49695b909c3b7628b6289db5479a1c204601f11",
-                                "reference": "d49695b909c3b7628b6289db5479a1c204601f11",
-                                "shasum": ""
-                        },
-                        "require": {
-                                "php": ">=5.3.0"
-                        },
-                        "time": "2021-05-03T11:20:27+00:00",
-                        "type": "library",
-                        "extra": {
-                                "branch-alias": {
-                                        "dev-master": "1.1.x-dev"
-                                }
-                        },
-                        "installation-source": "dist",
-                        "autoload": {
-                                "psr-4": {
-                                        "Psr\\Log\\": "Psr/Log/"
-                                }
-                        },
-                        "notification-url": "https://packagist.org/downloads/",
-                        "license": [
-                                "MIT"
-                        ],
-                        "authors": [
-                                {
-                                        "name": "PHP-FIG",
-                                        "homepage": "https://www.php-fig.org/"
-                                }
-                        ],
-                        "description": "Common interface for logging libraries",
-                        "homepage": "https://github.com/php-fig/log",
-                        "keywords": [
-                                "log",
-                                "psr",
-                                "psr-3"
-                        ],
-                        "install-path": "../psr/log"
-                },
-                {
-                        "name": "symfony/cache",
-                        "version": "v4.4.48",
-                        "version_normalized": "4.4.48.0",
-                        "source": {
-                                "type": "git",
-                                "url": "https://github.com/symfony/cache.git",
-                                "reference": "3b98ed664887ad197b8ede3da2432787212eb915"
-                        },
-                        "dist": {
-                                "type": "zip",
-                                "url": "https://api.github.com/repos/symfony/cache/zipball/3b98ed664887ad197b8ede3da2432787212eb915",
-                                "reference": "3b98ed664887ad197b8ede3da2432787212eb915",
-                                "shasum": ""
-                        },
-                        "require": {
-                                "php": ">=7.1.3",
-                                "psr/cache": "^1.0|^2.0",
-                                "psr/log": "^1|^2|^3",
-                                "symfony/cache-contracts": "^1.1.7|^2",
-                                "symfony/polyfill-php73": "^1.9",
-                                "symfony/polyfill-php80": "^1.16",
-                                "symfony/service-contracts": "^1.1|^2",
-                                "symfony/var-exporter": "^4.2|^5.0"
-                        },
-                        "conflict": {
-                                "doctrine/dbal": "<2.7",
-                                "symfony/dependency-injection": "<3.4",
-                                "symfony/http-kernel": "<4.4|>=5.0",
-                                "symfony/var-dumper": "<4.4"
-                        },
-                        "provide": {
-                                "psr/cache-implementation": "1.0|2.0",
-                                "psr/simple-cache-implementation": "1.0|2.0",
-                                "symfony/cache-implementation": "1.0|2.0"
-                        },
-                        "require-dev": {
-                                "cache/integration-tests": "dev-master",
-                                "doctrine/cache": "^1.6|^2.0",
-                                "doctrine/dbal": "^2.7|^3.0",
-                                "predis/predis": "^1.1",
-                                "psr/simple-cache": "^1.0|^2.0",
-                                "symfony/config": "^4.2|^5.0",
-                                "symfony/dependency-injection": "^3.4|^4.1|^5.0",
-                                "symfony/filesystem": "^4.4|^5.0",
-                                "symfony/http-kernel": "^4.4",
-                                "symfony/var-dumper": "^4.4|^5.0"
-                        },
-                        "time": "2022-10-17T20:21:54+00:00",
-                        "type": "library",
-                        "installation-source": "dist",
-                        "autoload": {
-                                "psr-4": {
-                                        "Symfony\\Component\\Cache\\": ""
-                                },
-                                "exclude-from-classmap": [
-                                        "/Tests/"
-                                ]
-                        },
-                        "notification-url": "https://packagist.org/downloads/",
-                        "license": [
-                                "MIT"
-                        ],
-                        "authors": [
-                                {
-                                        "name": "Nicolas Grekas",
-                                        "email": "p@tchwork.com"
-                                },
-                                {
-                                        "name": "Symfony Community",
-                                        "homepage": "https://symfony.com/contributors"
-                                }
-                        ],
-                        "description": "Provides extended PSR-6, PSR-16 (and tags) implementations",
-                        "homepage": "https://symfony.com",
-                        "keywords": [
-                                "caching",
-                                "psr6"
-                        ],
-                        "funding": [
-                                {
-                                        "url": "https://symfony.com/sponsor",
-                                        "type": "custom"
-                                },
-                                {
-                                        "url": "https://github.com/fabpot",
-                                        "type": "github"
-                                },
-                                {
-                                        "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
-                                        "type": "tidelift"
-                                }
-                        ],
-                        "install-path": "../symfony/cache"
-                },
-                {
-                        "name": "symfony/cache-contracts",
-                        "version": "v1.1.13",
-                        "version_normalized": "1.1.13.0",
-                        "source": {
-                                "type": "git",
-                                "url": "https://github.com/symfony/cache-contracts.git",
-                                "reference": "a872a66e0bf7bac179c89bc96c7098bef1949f81"
-                        },
-                        "dist": {
-                                "type": "zip",
-                                "url": "https://api.github.com/repos/symfony/cache-contracts/zipball/a872a66e0bf7bac179c89bc96c7098bef1949f81",
-                                "reference": "a872a66e0bf7bac179c89bc96c7098bef1949f81",
-                                "shasum": ""
-                        },
-                        "require": {
-                                "php": ">=7.1.3",
-                                "psr/cache": "^1.0|^2.0|^3.0"
-                        },
-                        "suggest": {
-                                "symfony/cache-implementation": ""
-                        },
-                        "time": "2022-01-02T09:41:36+00:00",
-                        "type": "library",
-                        "extra": {
-                                "branch-alias": {
-                                        "dev-main": "1.1-dev"
-                                },
-                                "thanks": {
-                                        "name": "symfony/contracts",
-                                        "url": "https://github.com/symfony/contracts"
-                                }
-                        },
-                        "installation-source": "dist",
-                        "autoload": {
-                                "psr-4": {
-                                        "Symfony\\Contracts\\Cache\\": ""
-                                }
-                        },
-                        "notification-url": "https://packagist.org/downloads/",
-                        "license": [
-                                "MIT"
-                        ],
-                        "authors": [
-                                {
-                                        "name": "Nicolas Grekas",
-                                        "email": "p@tchwork.com"
-                                },
-                                {
-                                        "name": "Symfony Community",
-                                        "homepage": "https://symfony.com/contributors"
-                                }
-                        ],
-                        "description": "Generic abstractions related to caching",
-                        "homepage": "https://symfony.com",
-                        "keywords": [
-                                "abstractions",
-                                "contracts",
-                                "decoupling",
-                                "interfaces",
-                                "interoperability",
-                                "standards"
-                        ],
-                        "funding": [
-                                {
-                                        "url": "https://symfony.com/sponsor",
-                                        "type": "custom"
-                                },
-                                {
-                                        "url": "https://github.com/fabpot",
-                                        "type": "github"
-                                },
-                                {
-                                        "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
-                                        "type": "tidelift"
-                                }
-                        ],
-                        "install-path": "../symfony/cache-contracts"
-                },
-                {
-                        "name": "symfony/polyfill-php73",
-                        "version": "v1.28.0",
-                        "version_normalized": "1.28.0.0",
-                        "source": {
-                                "type": "git",
-                                "url": "https://github.com/symfony/polyfill-php73.git",
-                                "reference": "fe2f306d1d9d346a7fee353d0d5012e401e984b5"
-                        },
-                        "dist": {
-                                "type": "zip",
-                                "url": "https://api.github.com/repos/symfony/polyfill-php73/zipball/fe2f306d1d9d346a7fee353d0d5012e401e984b5",
-                                "reference": "fe2f306d1d9d346a7fee353d0d5012e401e984b5",
-                                "shasum": ""
-                        },
-                        "require": {
-                                "php": ">=7.1"
-                        },
-                        "time": "2023-01-26T09:26:14+00:00",
-                        "type": "library",
-                        "extra": {
-                                "branch-alias": {
-                                        "dev-main": "1.28-dev"
-                                },
-                                "thanks": {
-                                        "name": "symfony/polyfill",
-                                        "url": "https://github.com/symfony/polyfill"
-                                }
-                        },
-                        "installation-source": "dist",
-                        "autoload": {
-                                "files": [
-                                        "bootstrap.php"
-                                ],
-                                "psr-4": {
-                                        "Symfony\\Polyfill\\Php73\\": ""
-                                },
-                                "classmap": [
-                                        "Resources/stubs"
-                                ]
-                        },
-                        "notification-url": "https://packagist.org/downloads/",
-                        "license": [
-                                "MIT"
-                        ],
-                        "authors": [
-                                {
-                                        "name": "Nicolas Grekas",
-                                        "email": "p@tchwork.com"
-                                },
-                                {
-                                        "name": "Symfony Community",
-                                        "homepage": "https://symfony.com/contributors"
-                                }
-                        ],
-                        "description": "Symfony polyfill backporting some PHP 7.3+ features to lower PHP versions",
-                        "homepage": "https://symfony.com",
-                        "keywords": [
-                                "compatibility",
-                                "polyfill",
-                                "portable",
-                                "shim"
-                        ],
-                        "funding": [
-                                {
-                                        "url": "https://symfony.com/sponsor",
-                                        "type": "custom"
-                                },
-                                {
-                                        "url": "https://github.com/fabpot",
-                                        "type": "github"
-                                },
-                                {
-                                        "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
-                                        "type": "tidelift"
-                                }
-                        ],
-                        "install-path": "../symfony/polyfill-php73"
-                },
-                {
-                        "name": "symfony/polyfill-php80",
-                        "version": "v1.28.0",
-                        "version_normalized": "1.28.0.0",
-                        "source": {
-                                "type": "git",
-                                "url": "https://github.com/symfony/polyfill-php80.git",
-                                "reference": "6caa57379c4aec19c0a12a38b59b26487dcfe4b5"
-                        },
-                        "dist": {
-                                "type": "zip",
-                                "url": "https://api.github.com/repos/symfony/polyfill-php80/zipball/6caa57379c4aec19c0a12a38b59b26487dcfe4b5",
-                                "reference": "6caa57379c4aec19c0a12a38b59b26487dcfe4b5",
-                                "shasum": ""
-                        },
-                        "require": {
-                                "php": ">=7.1"
-                        },
-                        "time": "2023-01-26T09:26:14+00:00",
-                        "type": "library",
-                        "extra": {
-                                "branch-alias": {
-                                        "dev-main": "1.28-dev"
-                                },
-                                "thanks": {
-                                        "name": "symfony/polyfill",
-                                        "url": "https://github.com/symfony/polyfill"
-                                }
-                        },
-                        "installation-source": "dist",
-                        "autoload": {
-                                "files": [
-                                        "bootstrap.php"
-                                ],
-                                "psr-4": {
-                                        "Symfony\\Polyfill\\Php80\\": ""
-                                },
-                                "classmap": [
-                                        "Resources/stubs"
-                                ]
-                        },
-                        "notification-url": "https://packagist.org/downloads/",
-                        "license": [
-                                "MIT"
-                        ],
-                        "authors": [
-                                {
-                                        "name": "Ion Bazan",
-                                        "email": "ion.bazan@gmail.com"
-                                },
-                                {
-                                        "name": "Nicolas Grekas",
-                                        "email": "p@tchwork.com"
-                                },
-                                {
-                                        "name": "Symfony Community",
-                                        "homepage": "https://symfony.com/contributors"
-                                }
-                        ],
-                        "description": "Symfony polyfill backporting some PHP 8.0+ features to lower PHP versions",
-                        "homepage": "https://symfony.com",
-                        "keywords": [
-                                "compatibility",
-                                "polyfill",
-                                "portable",
-                                "shim"
-                        ],
-                        "funding": [
-                                {
-                                        "url": "https://symfony.com/sponsor",
-                                        "type": "custom"
-                                },
-                                {
-                                        "url": "https://github.com/fabpot",
-                                        "type": "github"
-                                },
-                                {
-                                        "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
-                                        "type": "tidelift"
-                                }
-                        ],
-                        "install-path": "../symfony/polyfill-php80"
-                },
-                {
-                        "name": "symfony/service-contracts",
-                        "version": "v1.1.13",
-                        "version_normalized": "1.1.13.0",
-                        "source": {
-                                "type": "git",
-                                "url": "https://github.com/symfony/service-contracts.git",
-                                "reference": "afa00c500c2d6aea6e3b2f4862355f507bc5ebb4"
-                        },
-                        "dist": {
-                                "type": "zip",
-                                "url": "https://api.github.com/repos/symfony/service-contracts/zipball/afa00c500c2d6aea6e3b2f4862355f507bc5ebb4",
-                                "reference": "afa00c500c2d6aea6e3b2f4862355f507bc5ebb4",
-                                "shasum": ""
-                        },
-                        "require": {
-                                "php": ">=7.1.3",
-                                "psr/container": "^1.0"
-                        },
-                        "suggest": {
-                                "symfony/service-implementation": ""
-                        },
-                        "time": "2022-05-27T14:01:05+00:00",
-                        "type": "library",
-                        "extra": {
-                                "branch-alias": {
-                                        "dev-main": "1.1-dev"
-                                },
-                                "thanks": {
-                                        "name": "symfony/contracts",
-                                        "url": "https://github.com/symfony/contracts"
-                                }
-                        },
-                        "installation-source": "dist",
-                        "autoload": {
-                                "psr-4": {
-                                        "Symfony\\Contracts\\Service\\": ""
-                                }
-                        },
-                        "notification-url": "https://packagist.org/downloads/",
-                        "license": [
-                                "MIT"
-                        ],
-                        "authors": [
-                                {
-                                        "name": "Nicolas Grekas",
-                                        "email": "p@tchwork.com"
-                                },
-                                {
-                                        "name": "Symfony Community",
-                                        "homepage": "https://symfony.com/contributors"
-                                }
-                        ],
-                        "description": "Generic abstractions related to writing services",
-                        "homepage": "https://symfony.com",
-                        "keywords": [
-                                "abstractions",
-                                "contracts",
-                                "decoupling",
-                                "interfaces",
-                                "interoperability",
-                                "standards"
-                        ],
-                        "funding": [
-                                {
-                                        "url": "https://symfony.com/sponsor",
-                                        "type": "custom"
-                                },
-                                {
-                                        "url": "https://github.com/fabpot",
-                                        "type": "github"
-                                },
-                                {
-                                        "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
-                                        "type": "tidelift"
-                                }
-                        ],
-                        "install-path": "../symfony/service-contracts"
-                },
-                {
-                        "name": "symfony/var-exporter",
-                        "version": "v4.4.43",
-                        "version_normalized": "4.4.43.0",
-                        "source": {
-                                "type": "git",
-                                "url": "https://github.com/symfony/var-exporter.git",
-                                "reference": "4a7a3a3d55c471d396e6d28011368b7b83cb518b"
-                        },
-                        "dist": {
-                                "type": "zip",
-                                "url": "https://api.github.com/repos/symfony/var-exporter/zipball/4a7a3a3d55c471d396e6d28011368b7b83cb518b",
-                                "reference": "4a7a3a3d55c471d396e6d28011368b7b83cb518b",
-                                "shasum": ""
-                        },
-                        "require": {
-                                "php": ">=7.1.3",
-                                "symfony/polyfill-php80": "^1.16"
-                        },
-                        "require-dev": {
-                                "symfony/var-dumper": "^4.4.9|^5.0.9"
-                        },
-                        "time": "2022-05-27T11:44:32+00:00",
-                        "type": "library",
-                        "installation-source": "dist",
-                        "autoload": {
-                                "psr-4": {
-                                        "Symfony\\Component\\VarExporter\\": ""
-                                },
-                                "exclude-from-classmap": [
-                                        "/Tests/"
-                                ]
-                        },
-                        "notification-url": "https://packagist.org/downloads/",
-                        "license": [
-                                "MIT"
-                        ],
-                        "authors": [
-                                {
-                                        "name": "Nicolas Grekas",
-                                        "email": "p@tchwork.com"
-                                },
-                                {
-                                        "name": "Symfony Community",
-                                        "homepage": "https://symfony.com/contributors"
-                                }
-                        ],
-                        "description": "Allows exporting any serializable PHP data structure to plain PHP code",
-                        "homepage": "https://symfony.com",
-                        "keywords": [
-                                "clone",
-                                "construct",
-                                "export",
-                                "hydrate",
-                                "instantiate",
-                                "serialize"
-                        ],
-                        "funding": [
-                                {
-                                        "url": "https://symfony.com/sponsor",
-                                        "type": "custom"
-                                },
-                                {
-                                        "url": "https://github.com/fabpot",
-                                        "type": "github"
-                                },
-                                {
-                                        "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
-                                        "type": "tidelift"
-                                }
-                        ],
-                        "install-path": "../symfony/var-exporter"
+    "packages": [
+        {
+            "name": "ddtraceweb/monolog-parser",
+            "version": "1.3.1",
+            "version_normalized": "1.3.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/ddtraceweb/monolog-parser.git",
+                "reference": "d6715cb28700d691b20d713626856aacd3d5606c"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/ddtraceweb/monolog-parser/zipball/d6715cb28700d691b20d713626856aacd3d5606c",
+                "reference": "d6715cb28700d691b20d713626856aacd3d5606c",
+                "shasum": ""
+            },
+            "require": {
+                "monolog/monolog": "1.*"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "3.7.*"
+            },
+            "time": "2020-07-23T13:38:12+00:00",
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "psr-0": {
+                    "Dubture": "src/"
                 }
-        ],
-        "dev": true,
-        "dev-package-names": []
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Robert Gruendler",
+                    "email": "r.gruendler@gmail.com"
+                }
+            ],
+            "description": "A parser for monolog log entries",
+            "support": {
+                "source": "https://github.com/ddtraceweb/monolog-parser/tree/master"
+            },
+            "install-path": "../ddtraceweb/monolog-parser"
+        },
+        {
+            "name": "monext/monext-php",
+            "version": "4.77.0",
+            "version_normalized": "4.77.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Monext/monext-php-sdk.git",
+                "reference": "091203d88aa2523549cce4586c5471a63a155e5b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Monext/monext-php-sdk/zipball/091203d88aa2523549cce4586c5471a63a155e5b",
+                "reference": "091203d88aa2523549cce4586c5471a63a155e5b",
+                "shasum": ""
+            },
+            "require": {
+                "ext-curl": "*",
+                "ext-mbstring": "*",
+                "ext-openssl": "*",
+                "ext-soap": "*",
+                "monolog/monolog": "1.* || ~2.0 || ~3.0",
+                "php": ">=5.6",
+                "symfony/cache": ">=3.4"
+            },
+            "time": "2024-09-27T15:57:57+00:00",
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Payline\\": "src/Payline"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "LGPL-3.0"
+            ],
+            "authors": [
+                {
+                    "name": "Cyrille HEIT",
+                    "email": "cyrille.heit@monext.net",
+                    "homepage": "http://www.monext.net"
+                },
+                {
+                    "name": "Vincent Pietri",
+                    "email": "vincent.pietri@tbdgroup.com",
+                    "homepage": "https://www.tbdgroup.com/"
+                }
+            ],
+            "description": "Monext PHP Library",
+            "keywords": [
+                "Monext",
+                "Payline",
+                "online",
+                "payment"
+            ],
+            "support": {
+                "docs": "https://docs.monext.fr/display/DT",
+                "email": "support@payline.com",
+                "issues": "https://github.com/Monext/monext-php-sdk/issues",
+                "source": "https://github.com/Monext/monext-php-sdk/tree/4.77.0"
+            },
+            "install-path": "../monext/monext-php"
+        },
+        {
+            "name": "monolog/monolog",
+            "version": "1.27.1",
+            "version_normalized": "1.27.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Seldaek/monolog.git",
+                "reference": "904713c5929655dc9b97288b69cfeedad610c9a1"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Seldaek/monolog/zipball/904713c5929655dc9b97288b69cfeedad610c9a1",
+                "reference": "904713c5929655dc9b97288b69cfeedad610c9a1",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.0",
+                "psr/log": "~1.0"
+            },
+            "provide": {
+                "psr/log-implementation": "1.0.0"
+            },
+            "require-dev": {
+                "aws/aws-sdk-php": "^2.4.9 || ^3.0",
+                "doctrine/couchdb": "~1.0@dev",
+                "graylog2/gelf-php": "~1.0",
+                "php-amqplib/php-amqplib": "~2.4",
+                "php-console/php-console": "^3.1.3",
+                "phpstan/phpstan": "^0.12.59",
+                "phpunit/phpunit": "~4.5",
+                "ruflin/elastica": ">=0.90 <3.0",
+                "sentry/sentry": "^0.13",
+                "swiftmailer/swiftmailer": "^5.3|^6.0"
+            },
+            "suggest": {
+                "aws/aws-sdk-php": "Allow sending log messages to AWS services like DynamoDB",
+                "doctrine/couchdb": "Allow sending log messages to a CouchDB server",
+                "ext-amqp": "Allow sending log messages to an AMQP server (1.0+ required)",
+                "ext-mongo": "Allow sending log messages to a MongoDB server",
+                "graylog2/gelf-php": "Allow sending log messages to a GrayLog2 server",
+                "mongodb/mongodb": "Allow sending log messages to a MongoDB server via PHP Driver",
+                "php-amqplib/php-amqplib": "Allow sending log messages to an AMQP server using php-amqplib",
+                "php-console/php-console": "Allow sending log messages to Google Chrome",
+                "rollbar/rollbar": "Allow sending log messages to Rollbar",
+                "ruflin/elastica": "Allow sending log messages to an Elastic Search server",
+                "sentry/sentry": "Allow sending log messages to a Sentry server"
+            },
+            "time": "2022-06-09T08:53:42+00:00",
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Monolog\\": "src/Monolog"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Jordi Boggiano",
+                    "email": "j.boggiano@seld.be",
+                    "homepage": "http://seld.be"
+                }
+            ],
+            "description": "Sends your logs to files, sockets, inboxes, databases and various web services",
+            "homepage": "http://github.com/Seldaek/monolog",
+            "keywords": [
+                "log",
+                "logging",
+                "psr-3"
+            ],
+            "funding": [
+                {
+                    "url": "https://github.com/Seldaek",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/monolog/monolog",
+                    "type": "tidelift"
+                }
+            ],
+            "install-path": "../monolog/monolog"
+        },
+        {
+            "name": "psr/cache",
+            "version": "1.0.1",
+            "version_normalized": "1.0.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-fig/cache.git",
+                "reference": "d11b50ad223250cf17b86e38383413f5a6764bf8"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-fig/cache/zipball/d11b50ad223250cf17b86e38383413f5a6764bf8",
+                "reference": "d11b50ad223250cf17b86e38383413f5a6764bf8",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.0"
+            },
+            "time": "2016-08-06T20:24:11+00:00",
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0.x-dev"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Psr\\Cache\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PHP-FIG",
+                    "homepage": "http://www.php-fig.org/"
+                }
+            ],
+            "description": "Common interface for caching libraries",
+            "keywords": [
+                "cache",
+                "psr",
+                "psr-6"
+            ],
+            "install-path": "../psr/cache"
+        },
+        {
+            "name": "psr/container",
+            "version": "1.0.0",
+            "version_normalized": "1.0.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-fig/container.git",
+                "reference": "b7ce3b176482dbbc1245ebf52b181af44c2cf55f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-fig/container/zipball/b7ce3b176482dbbc1245ebf52b181af44c2cf55f",
+                "reference": "b7ce3b176482dbbc1245ebf52b181af44c2cf55f",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.0"
+            },
+            "time": "2017-02-14T16:28:37+00:00",
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0.x-dev"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Psr\\Container\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PHP-FIG",
+                    "homepage": "http://www.php-fig.org/"
+                }
+            ],
+            "description": "Common Container Interface (PHP FIG PSR-11)",
+            "homepage": "https://github.com/php-fig/container",
+            "keywords": [
+                "PSR-11",
+                "container",
+                "container-interface",
+                "container-interop",
+                "psr"
+            ],
+            "install-path": "../psr/container"
+        },
+        {
+            "name": "psr/log",
+            "version": "1.1.4",
+            "version_normalized": "1.1.4.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-fig/log.git",
+                "reference": "d49695b909c3b7628b6289db5479a1c204601f11"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-fig/log/zipball/d49695b909c3b7628b6289db5479a1c204601f11",
+                "reference": "d49695b909c3b7628b6289db5479a1c204601f11",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.0"
+            },
+            "time": "2021-05-03T11:20:27+00:00",
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.1.x-dev"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Psr\\Log\\": "Psr/Log/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PHP-FIG",
+                    "homepage": "https://www.php-fig.org/"
+                }
+            ],
+            "description": "Common interface for logging libraries",
+            "homepage": "https://github.com/php-fig/log",
+            "keywords": [
+                "log",
+                "psr",
+                "psr-3"
+            ],
+            "install-path": "../psr/log"
+        },
+        {
+            "name": "symfony/cache",
+            "version": "v4.4.48",
+            "version_normalized": "4.4.48.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/cache.git",
+                "reference": "3b98ed664887ad197b8ede3da2432787212eb915"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/cache/zipball/3b98ed664887ad197b8ede3da2432787212eb915",
+                "reference": "3b98ed664887ad197b8ede3da2432787212eb915",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.1.3",
+                "psr/cache": "^1.0|^2.0",
+                "psr/log": "^1|^2|^3",
+                "symfony/cache-contracts": "^1.1.7|^2",
+                "symfony/polyfill-php73": "^1.9",
+                "symfony/polyfill-php80": "^1.16",
+                "symfony/service-contracts": "^1.1|^2",
+                "symfony/var-exporter": "^4.2|^5.0"
+            },
+            "conflict": {
+                "doctrine/dbal": "<2.7",
+                "symfony/dependency-injection": "<3.4",
+                "symfony/http-kernel": "<4.4|>=5.0",
+                "symfony/var-dumper": "<4.4"
+            },
+            "provide": {
+                "psr/cache-implementation": "1.0|2.0",
+                "psr/simple-cache-implementation": "1.0|2.0",
+                "symfony/cache-implementation": "1.0|2.0"
+            },
+            "require-dev": {
+                "cache/integration-tests": "dev-master",
+                "doctrine/cache": "^1.6|^2.0",
+                "doctrine/dbal": "^2.7|^3.0",
+                "predis/predis": "^1.1",
+                "psr/simple-cache": "^1.0|^2.0",
+                "symfony/config": "^4.2|^5.0",
+                "symfony/dependency-injection": "^3.4|^4.1|^5.0",
+                "symfony/filesystem": "^4.4|^5.0",
+                "symfony/http-kernel": "^4.4",
+                "symfony/var-dumper": "^4.4|^5.0"
+            },
+            "time": "2022-10-17T20:21:54+00:00",
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Symfony\\Component\\Cache\\": ""
+                },
+                "exclude-from-classmap": [
+                    "/Tests/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Nicolas Grekas",
+                    "email": "p@tchwork.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Provides extended PSR-6, PSR-16 (and tags) implementations",
+            "homepage": "https://symfony.com",
+            "keywords": [
+                "caching",
+                "psr6"
+            ],
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "install-path": "../symfony/cache"
+        },
+        {
+            "name": "symfony/cache-contracts",
+            "version": "v1.1.13",
+            "version_normalized": "1.1.13.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/cache-contracts.git",
+                "reference": "a872a66e0bf7bac179c89bc96c7098bef1949f81"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/cache-contracts/zipball/a872a66e0bf7bac179c89bc96c7098bef1949f81",
+                "reference": "a872a66e0bf7bac179c89bc96c7098bef1949f81",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.1.3",
+                "psr/cache": "^1.0|^2.0|^3.0"
+            },
+            "suggest": {
+                "symfony/cache-implementation": ""
+            },
+            "time": "2022-01-02T09:41:36+00:00",
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-main": "1.1-dev"
+                },
+                "thanks": {
+                    "name": "symfony/contracts",
+                    "url": "https://github.com/symfony/contracts"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Symfony\\Contracts\\Cache\\": ""
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Nicolas Grekas",
+                    "email": "p@tchwork.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Generic abstractions related to caching",
+            "homepage": "https://symfony.com",
+            "keywords": [
+                "abstractions",
+                "contracts",
+                "decoupling",
+                "interfaces",
+                "interoperability",
+                "standards"
+            ],
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "install-path": "../symfony/cache-contracts"
+        },
+        {
+            "name": "symfony/polyfill-php73",
+            "version": "v1.28.0",
+            "version_normalized": "1.28.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/polyfill-php73.git",
+                "reference": "fe2f306d1d9d346a7fee353d0d5012e401e984b5"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/polyfill-php73/zipball/fe2f306d1d9d346a7fee353d0d5012e401e984b5",
+                "reference": "fe2f306d1d9d346a7fee353d0d5012e401e984b5",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.1"
+            },
+            "time": "2023-01-26T09:26:14+00:00",
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-main": "1.28-dev"
+                },
+                "thanks": {
+                    "name": "symfony/polyfill",
+                    "url": "https://github.com/symfony/polyfill"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "files": [
+                    "bootstrap.php"
+                ],
+                "psr-4": {
+                    "Symfony\\Polyfill\\Php73\\": ""
+                },
+                "classmap": [
+                    "Resources/stubs"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Nicolas Grekas",
+                    "email": "p@tchwork.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Symfony polyfill backporting some PHP 7.3+ features to lower PHP versions",
+            "homepage": "https://symfony.com",
+            "keywords": [
+                "compatibility",
+                "polyfill",
+                "portable",
+                "shim"
+            ],
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "install-path": "../symfony/polyfill-php73"
+        },
+        {
+            "name": "symfony/polyfill-php80",
+            "version": "v1.28.0",
+            "version_normalized": "1.28.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/polyfill-php80.git",
+                "reference": "6caa57379c4aec19c0a12a38b59b26487dcfe4b5"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/polyfill-php80/zipball/6caa57379c4aec19c0a12a38b59b26487dcfe4b5",
+                "reference": "6caa57379c4aec19c0a12a38b59b26487dcfe4b5",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.1"
+            },
+            "time": "2023-01-26T09:26:14+00:00",
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-main": "1.28-dev"
+                },
+                "thanks": {
+                    "name": "symfony/polyfill",
+                    "url": "https://github.com/symfony/polyfill"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "files": [
+                    "bootstrap.php"
+                ],
+                "psr-4": {
+                    "Symfony\\Polyfill\\Php80\\": ""
+                },
+                "classmap": [
+                    "Resources/stubs"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Ion Bazan",
+                    "email": "ion.bazan@gmail.com"
+                },
+                {
+                    "name": "Nicolas Grekas",
+                    "email": "p@tchwork.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Symfony polyfill backporting some PHP 8.0+ features to lower PHP versions",
+            "homepage": "https://symfony.com",
+            "keywords": [
+                "compatibility",
+                "polyfill",
+                "portable",
+                "shim"
+            ],
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "install-path": "../symfony/polyfill-php80"
+        },
+        {
+            "name": "symfony/service-contracts",
+            "version": "v1.1.13",
+            "version_normalized": "1.1.13.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/service-contracts.git",
+                "reference": "afa00c500c2d6aea6e3b2f4862355f507bc5ebb4"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/service-contracts/zipball/afa00c500c2d6aea6e3b2f4862355f507bc5ebb4",
+                "reference": "afa00c500c2d6aea6e3b2f4862355f507bc5ebb4",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.1.3",
+                "psr/container": "^1.0"
+            },
+            "suggest": {
+                "symfony/service-implementation": ""
+            },
+            "time": "2022-05-27T14:01:05+00:00",
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-main": "1.1-dev"
+                },
+                "thanks": {
+                    "name": "symfony/contracts",
+                    "url": "https://github.com/symfony/contracts"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Symfony\\Contracts\\Service\\": ""
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Nicolas Grekas",
+                    "email": "p@tchwork.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Generic abstractions related to writing services",
+            "homepage": "https://symfony.com",
+            "keywords": [
+                "abstractions",
+                "contracts",
+                "decoupling",
+                "interfaces",
+                "interoperability",
+                "standards"
+            ],
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "install-path": "../symfony/service-contracts"
+        },
+        {
+            "name": "symfony/var-exporter",
+            "version": "v4.4.43",
+            "version_normalized": "4.4.43.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/var-exporter.git",
+                "reference": "4a7a3a3d55c471d396e6d28011368b7b83cb518b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/var-exporter/zipball/4a7a3a3d55c471d396e6d28011368b7b83cb518b",
+                "reference": "4a7a3a3d55c471d396e6d28011368b7b83cb518b",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.1.3",
+                "symfony/polyfill-php80": "^1.16"
+            },
+            "require-dev": {
+                "symfony/var-dumper": "^4.4.9|^5.0.9"
+            },
+            "time": "2022-05-27T11:44:32+00:00",
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Symfony\\Component\\VarExporter\\": ""
+                },
+                "exclude-from-classmap": [
+                    "/Tests/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Nicolas Grekas",
+                    "email": "p@tchwork.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Allows exporting any serializable PHP data structure to plain PHP code",
+            "homepage": "https://symfony.com",
+            "keywords": [
+                "clone",
+                "construct",
+                "export",
+                "hydrate",
+                "instantiate",
+                "serialize"
+            ],
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "install-path": "../symfony/var-exporter"
+        }
+    ],
+    "dev": false,
+    "dev-package-names": []
 }

@@ -4,6 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
+    "content-hash": "d5173cd3022b6b748bb5b4953ffbf7b3",
     "packages": [
         {
             "name": "ddtraceweb/monolog-parser",
@@ -48,8 +49,8 @@
             "time": "2020-07-23T13:38:12+00:00"
         },
         {
-          "name": "monext/monext-php",
-          "version": "4.77.0",
+            "name": "monext/monext-php",
+            "version": "4.77.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Monext/monext-php-sdk.git",

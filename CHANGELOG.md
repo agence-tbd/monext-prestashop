@@ -2,9 +2,11 @@
 ===
 <h2>released on 2024-11-07</h2>
 <ul>
+<li>Add Klarna payment compatibility</li>
 <li>Update SDK dependency to fit rebranding monext/monext-php</li>
 <li>Simplify secondary contracts configuration</li>
 <li>Update logos</li>
+<li>Add log visibility in backoffice</li>
 </ul>
 
 2.3.5
