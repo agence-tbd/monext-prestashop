@@ -281,13 +281,16 @@ class PaylinePaymentGateway
             'AMEX-ONE CLICK' => 'amex_one_clic.png',
             'AMEX-REC BILLING' => 'amex_rec.png',
             'ANCV' => 'ancv.png',
+            'BANCONTACT_MNXT' => 'bancontact.png',
             'BC/MC' => 'bcmc.png',
             'BCMC' => 'bcmc.png',
             'BUYSTER' => 'buyster.png',
             'CASINO' => 'casino.png',
+            'CASINO_3XCB' => 'Floa3x.png',
+            'CASINO_4XCB' => 'Floa4x.png',
             'CB/VISA/MASTERCARD' => 'cb_visa_mastercard.png',
             'CB/MC PASS' => 'cbpass.png',
-            'CB' => 'cb_visa_mastercard.png',
+            'CB' => 'CB.jpg',
             'CDGP' => 'cdgp.png',
             'COFINOGA' => 'cofinoga.png',
             'CYRILLUS' => 'cyrillus.png',
@@ -301,12 +304,15 @@ class PaylinePaymentGateway
             'JCB' => 'jcb.png',
             'KANGOUROU' => 'kangourou.png',
             'KLARNA' => 'klarna.png',
+            'KLARNA_PAY' => 'klarna_pay.png',
             'LEETCHI' => 'leetchi.png',
             'LYDIA' => 'lydia.png',
             'MAESTRO' => 'maestro.png',
             'MANDARINE' => 'mandarine.png',
             'MASTERPASS' => 'masterpass.png',
             'MAXICHEQUE' => 'maxicheque.png',
+            'MBWAY_MNXT' => 'MBWay.png',
+            'MULTIBANCO_MNXT' => 'multibanco.png',
             'VISA/MASTERCARD' => 'visa_mastercard.png',
             'MCVISA' => 'visa_mastercard.png',
             'MONEYCLIC' => 'moneyclic.png',
@@ -316,6 +322,7 @@ class PaylinePaymentGateway
             'OKSHOPPING' => 'okshopping.png',
             'PASS' => 'pass.png',
             'CBPASS' => 'pass.png',
+            'PAYCONIQ_MNXT' => 'payconiq-h40.png',
             'PAYFAIR' => 'payfair.png',
             'PAYLIB' => 'paylib.png',
             'PAYPAL' => 'paypal.png',
@@ -373,6 +380,12 @@ class PaylinePaymentGateway
         $orderTotalWt = $context->cart->getOrderTotal();
         $orderTaxes = ($orderTotalWt - $orderTotal);
 
+        $shippingTotal = $context->cart->getTotalShippingCost(null, false);
+        $shippingTotalWt = $context->cart->getTotalShippingCost();
+        $shippingTaxes = ($shippingTotalWt - $shippingTotal);
+
+        $totalDiscounts = $context->cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS);
+
         // Get Payline instance
         $instance = self::getInstance();
 
@@ -423,9 +436,11 @@ class PaylinePaymentGateway
                 'ref' => 'cart' . (int)$context->cart->id . (!empty($context->cookie->pl_try) ? 'try' . $context->cookie->pl_try : ''),
                 'country' => $invoiceCountry->iso_code,
                 'amount' => round($orderTotalWt * 100),
-                'taxes' => round($orderTaxes * 100),
+                'taxes' => round(($orderTaxes - $shippingTaxes) * 100),
                 'date' => date('d/m/Y H:i'),
                 'currency' => $context->currency->iso_code_num,
+                'deliveryCharge' => round($context->cart->getTotalShippingCost() * 100),
+    //            'discountAmount' => round($totalDiscounts * 100),
             ),
             'contracts' => (sizeof($contracts) ? $contracts : null),
             'secondContracts' => (sizeof($secondContracts) ? $secondContracts : null),
@@ -486,9 +501,12 @@ class PaylinePaymentGateway
         if(!$defaultCategory or $defaultCategory>26) {
             $defaultCategory = null;
         }
+
+
+        $totalOrderLines = 0;
         // Add order details infos
         foreach ($context->cart->getProducts() as $cartProduct) {
-            $instance->addOrderDetail(array(
+            $orderLine = array(
                 'ref' => (string)$cartProduct['reference'],
                 'price' => round((float)(isset($cartProduct['price_wt']) ? $cartProduct['price_wt'] : $cartProduct['price']) * 100),
                 'quantity' => (int)$cartProduct['cart_quantity'],
@@ -496,6 +514,26 @@ class PaylinePaymentGateway
                 'category' =>  $defaultCategory,
                 'brand' => (int)$cartProduct['id_manufacturer'],
                 'taxRate' => round((float)$cartProduct['rate'] * 100),
+            );
+            $instance->addOrderDetail($orderLine);
+
+            $totalOrderLines+=$orderLine['price']*$orderLine['quantity'];
+        }
+
+        //Allow Klarna with cart discount
+        $adjustment = $params['order']['amount'] - $totalOrderLines - $params['order']['deliveryCharge'];// - $params['order']['discountAmount'];
+        if ($adjustment) {
+            // Calculate the taxes percentage applied to cart products
+            $cartProductsTaxes = ($context->cart->getOrderTotal(true, Cart::ONLY_PRODUCTS) / $context->cart->getOrderTotal(false, Cart::ONLY_PRODUCTS) - 1);
+            $taxRate = round($cartProductsTaxes * 100 * 100);
+
+            $instance->addOrderDetail(array(
+                'ref' => 'CART_DISCOUNT',
+                'price' => $adjustment,
+                'quantity' => 1,
+                'comment' => 'Cart amount adjustment',
+                'category' =>  $defaultCategory,
+                'taxRate' => $taxRate,
             ));
         }
 
@@ -508,7 +546,7 @@ class PaylinePaymentGateway
         $result = $instance->doWebPayment($params);
 
         if ($error = self::getErrorResponse($result)) {
-            $instance->getLogger()->addError(json_encode($error));
+            $instance->getLogger()->addError(__FUNCTION__ , $error);
             return array(null, $params);
         }
 
@@ -546,7 +584,7 @@ class PaylinePaymentGateway
         $result = $instance->doRecurrentWalletPayment($params);
 
         if ($error = self::getErrorResponse($result)) {
-            $instance->getLogger()->addError(json_encode($error));
+            $instance->getLogger()->addError(__FUNCTION__ , $error);
         }
 
         return $result;
@@ -836,7 +874,7 @@ class PaylinePaymentGateway
         $result = $instance->getTransactionDetails($params);
 
         if ($error = self::getErrorResponse($result)) {
-            $instance->getLogger()->addError(json_encode($error));
+            $instance->getLogger()->addError(__FUNCTION__ , $error);
         } else {
             // Loop into result, format and sort some fields
             self::formatAndSortResult($result);
@@ -885,7 +923,7 @@ class PaylinePaymentGateway
         $result = $instance->disablePaymentRecord($params);
 
         if ($error = self::getErrorResponse($result)) {
-            $instance->getLogger()->addError(json_encode($error));
+            $instance->getLogger()->addError(__FUNCTION__ , $error);
         }
 
         return $result;
@@ -955,7 +993,7 @@ class PaylinePaymentGateway
         }
 
         if ($error = self::getErrorResponse($result)) {
-            $instance->getLogger()->addError(json_encode($error));
+            $instance->getLogger()->addError(__FUNCTION__ , $error);
         }
 
         return $result;
@@ -992,7 +1030,7 @@ class PaylinePaymentGateway
         $result = $instance->doRefund($params);
 
         if ($error = self::getErrorResponse($result)) {
-            $instance->getLogger()->addError(json_encode($error));
+            $instance->getLogger()->addError(__FUNCTION__ , $error);
         }
 
         return $result;
@@ -1020,7 +1058,7 @@ class PaylinePaymentGateway
         $result = $instance->doReset($params);
 
         if ($error = self::getErrorResponse($result)) {
-            $instance->getLogger()->addError(json_encode($error));
+            $instance->getLogger()->addError(__FUNCTION__ , $error);
         }
 
         return $result;
@@ -1146,15 +1184,7 @@ class PaylinePaymentGateway
      */
     public static function getEnabledContracts($contractNumberOnly = false)
     {
-        $enabledContractsList = array();
-        $enabledContracts = Configuration::get('PAYLINE_CONTRACTS');
-        if (!empty($enabledContracts) && json_decode($enabledContracts) !== false) {
-            $enabledContractsList = json_decode($enabledContracts);
-            if ($contractNumberOnly && is_array($enabledContractsList)) {
-                $enabledContractsList = array_map('PaylinePaymentGateway::extractContractNumber', $enabledContractsList);
-            }
-        }
-        return $enabledContractsList;
+        return self::getConfigContracts('PAYLINE_CONTRACTS', $contractNumberOnly);
     }
 
     /**
@@ -1165,8 +1195,22 @@ class PaylinePaymentGateway
      */
     public static function getFallbackEnabledContracts($contractNumberOnly = false)
     {
+        $configKey = 'PAYLINE_CONTRACTS';
+        if(!Configuration::get('PAYLINE_ALT_CONTRACTS_AS_MAIN')) {
+            $configKey = 'PAYLINE_ALT_CONTRACTS';
+        }
+
+        return self::getConfigContracts($configKey, $contractNumberOnly);
+    }
+
+    /**
+     * @param $configKey
+     * @param $contractNumberOnly
+     * @return array|mixed
+     */
+    protected static function getConfigContracts($configKey, $contractNumberOnly = false) {
         $enabledContractsList = array();
-        $enabledContracts = Configuration::get('PAYLINE_ALT_CONTRACTS');
+        $enabledContracts = Configuration::get($configKey);
         if (!empty($enabledContracts) && json_decode($enabledContracts) !== false) {
             $enabledContractsList = json_decode($enabledContracts);
             if ($contractNumberOnly && is_array($enabledContractsList)) {
@@ -1175,4 +1219,5 @@ class PaylinePaymentGateway
         }
         return $enabledContractsList;
     }
+
 }

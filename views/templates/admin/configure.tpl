@@ -14,6 +14,7 @@
         <a href="#recurring-payment-configuration" class="list-group-item {if $payline_active_tab == 'recurring-web-payment'}selected_tab active{/if}" data-toggle="tab" data-identifier="recurring-payment-configuration"><i class="icon icon-cogs"></i>&nbsp;&nbsp;{l s='Nx payment' mod='payline'}</a>
         <a href="#subscribe-payment-configuration" class="list-group-item {if $payline_active_tab == 'subscribe-payment'}selected_tab active{/if}" data-toggle="tab" data-identifier="subscribe-payment-configuration"><i class="icon icon-cogs"></i>&nbsp;&nbsp;{l s='Recurring payment' mod='payline'}</a>
         {if !empty($payline_api_status)}<a href="#contracts-configuration" class="list-group-item {if $payline_active_tab == 'contracts'}selected_tab active{/if}{if !empty($payline_contracts_errors)} list-group-item-warning{/if}" data-toggle="tab" data-identifier="payline-configuration"><i class="icon icon-credit-card"></i>&nbsp;&nbsp;{l s='Contracts configuration' mod='payline'}</a>{/if}
+        <a href="#logs-configuration" class="list-group-item {if $payline_active_tab == 'logs'}selected_tab active{/if}" data-toggle="tab" data-identifier="logs-configuration"><i class="icon icon-file-text"></i>&nbsp;&nbsp;{l s='Logs Viewing' mod='payline'}</a>
     </div>
     <div class="tab-content col-lg-10">
         <div class="tab-pane {if $payline_active_tab == 'landing'}active{/if}" id="landing-configuration">{include file="./landing.tpl"}</div>
@@ -24,6 +25,7 @@
         {if !empty($payline_api_status)}
             <div class="tab-pane {if $payline_active_tab == 'contracts'}active{/if}" id="contracts-configuration">{$payline_contracts_configuration}{* HTML *}</div>
         {/if}
+      <div class="tab-pane {if $payline_active_tab == 'logs'}active{/if}" id="logs-configuration">{$payline_logs_viewing}{* HTML *}</div>
     </div>
 </div>
 <script type="text/javascript">

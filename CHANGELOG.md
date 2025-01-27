@@ -1,3 +1,14 @@
+2.3.6
+===
+<h2>released on 2024-11-07</h2>
+<ul>
+<li>Add Klarna payment compatibility</li>
+<li>Update SDK dependency to fit rebranding monext/monext-php</li>
+<li>Simplify secondary contracts configuration</li>
+<li>Update logos</li>
+<li>Add log visibility in backoffice</li>
+</ul>
+
 2.3.5
 ===
 <h2>released on 2023-05-10</h2>
@@ -10,7 +21,7 @@
 ===
 <h2>released on 2023-04-11</h2>
 <ul>
-<li>Total refund on status modification
+<li>Total refund on status modification</li>
 <li>Product select in configuration (payment REC)</li>
 </ul>
 

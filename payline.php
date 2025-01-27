@@ -4,7 +4,7 @@
  *
  * @author    Monext <support@payline.com>
  * @copyright Monext - http://www.payline.com
- * @version   2.3.5
+ * @version   2.3.6
  */
 
 if (!defined('_PS_VERSION_')) {
@@ -98,7 +98,7 @@ class payline extends PaymentModule
         $this->name = 'payline';
         $this->tab = 'payments_gateways';
         $this->module_key = '';
-        $this->version = '2.3.5';
+        $this->version = '2.3.6';
         $this->ps_versions_compliancy = array('min' => '1.7.1.0', 'max' => _PS_VERSION_);
         $this->author = 'Monext';
 
@@ -218,6 +218,25 @@ class payline extends PaymentModule
     }
 
     /**
+     * Install this Ajax controller
+     * @since 2.3.6
+     * @return bool
+     */
+    public function installTab()
+    {
+        $tab = new Tab();
+        $tab->class_name = 'AdminPaylineLogsAjax';
+        $tab->module = $this->name;
+        $tab->active = true;
+        $tab->id_parent = -1;
+        $tab->name = array_fill_keys(
+            Language::getIDs(false),
+            $this->displayName
+        );
+        return $tab->add();
+    }
+
+    /**
      * Module install
      * @since 2.0.0
      * @return bool
@@ -235,7 +254,9 @@ class payline extends PaymentModule
         Configuration::updateValue('PAYLINE_PROXY_LOGIN', false);
         Configuration::updateValue('PAYLINE_PROXY_PASSWORD', false);
         Configuration::updateValue('PAYLINE_CONTRACTS', false);
+        Configuration::updateValue('PAYLINE_ALT_CONTRACTS_AS_MAIN', false);
         Configuration::updateValue('PAYLINE_ALT_CONTRACTS', false);
+
 
         // Run parent install process, register to hooks, then force update module position
         if (!parent::install()
@@ -247,7 +268,7 @@ class payline extends PaymentModule
             || !$this->registerHook('actionAdminOrdersListingResultsModifier')
             || !$this->registerHook('actionObjectOrderSlipAddBefore')
             || !$this->registerHook('actionOrderStatusUpdate')
-            || (version_compare(_PS_VERSION_, '1.7.0.0', '<') && !$this->registerHook('displayPayment'))
+            || ($this->prestaVersionCompare('<') && !$this->registerHook('displayPayment'))
             || !$this->registerHook('displayPaymentReturn')
             || !$this->registerHook('paymentOptions')
             || !$this->registerHook('actionObjectOrderDetailUpdateAfter')
@@ -256,6 +277,7 @@ class payline extends PaymentModule
             || !$this->createCustomOrderState()
             // Install tables
             || !$this->createTables()
+            || !$this->installTab()
         ) {
             return false;
         }
@@ -283,7 +305,7 @@ class payline extends PaymentModule
             $this->context->controller->errors[] = $this->l('Please try to use another payment method or another credit card.');
         }
         // Add front.css on OPC
-        if ($this->isPaymentAvailable() && version_compare(_PS_VERSION_, '1.7.0.0', '<') && $this->context->controller instanceof OrderOpcController) {
+        if ($this->isPaymentAvailable() && $this->prestaVersionCompare('<') && $this->context->controller instanceof OrderOpcController) {
             $this->context->controller->addCSS($this->_path.'views/css/front.css');
         }
     }
@@ -538,7 +560,7 @@ class payline extends PaymentModule
         $this->context->smarty->assign(array(
             'subscriptionControllerLink' => $this->context->link->getModuleLink('payline', 'subscriptions', array(), true),
         ));
-        if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
+        if ($this->prestaVersionCompare()) {
             $output .= $this->context->smarty->fetch($this->local_path.'views/templates/hook/1.7/customer_account.tpl');
         } else {
             $output .= $this->display(__FILE__, 'customer_account.tpl');
@@ -642,7 +664,7 @@ class payline extends PaymentModule
                     'allowRefund' => $allowRefund,
                     'allowReset' => $allowReset,
                 ));
-                if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
+                if ($this->prestaVersionCompare()) {
                     $output .= $this->context->smarty->fetch($this->local_path.'views/templates/hook/admin_order.tpl');
                 } else {
                     $output .= $this->display(__FILE__, 'admin_order.tpl');
@@ -867,7 +889,7 @@ class payline extends PaymentModule
     public function hookDisplayPaymentReturn($params)
     {
         // Check if module is enabled and PS < 1.7
-        if (!$this->active || version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
+        if (!$this->active || $this->prestaVersionCompare()) {
             return;
         }
 
@@ -1124,7 +1146,7 @@ class payline extends PaymentModule
     {
         // Check if module is enabled and payment gateway is configured for at least one payment method
         // Check if PS < 1.7
-        if (!$this->isPaymentAvailable() || version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
+        if (!$this->isPaymentAvailable() || $this->prestaVersionCompare()) {
             return;
         }
 
@@ -1352,7 +1374,7 @@ class payline extends PaymentModule
             return false;
         }
         // Check if current cart currency is allowed
-        if (version_compare(_PS_VERSION_, '1.7.0.0', '>=') && !$this->checkAllowedCurrency($this->context->cart)) {
+        if ($this->prestaVersionCompare() && !$this->checkAllowedCurrency($this->context->cart)) {
             return false;
         }
 
@@ -1493,8 +1515,8 @@ class payline extends PaymentModule
         }
 
         $this->context->smarty->assign('payline_id_shop', (int)$this->context->shop->id);
-        $this->context->smarty->assign('payline_is_ps16', version_compare(_PS_VERSION_, '1.7.0.0', '<'));
-        $this->context->smarty->assign('payline_is_ps17', version_compare(_PS_VERSION_, '1.7.0.0', '>='));
+        $this->context->smarty->assign('payline_is_ps16', $this->prestaVersionCompare('<'));
+        $this->context->smarty->assign('payline_is_ps17', $this->prestaVersionCompare());
         $this->context->smarty->assign('payline_active_tab', $activeTab);
         $this->context->smarty->assign('payline_api_status', Configuration::get('PAYLINE_API_STATUS'));
         $this->context->smarty->assign('payline_contracts_errors', $paylineCheckNoEnabledContract);
@@ -1504,6 +1526,7 @@ class payline extends PaymentModule
         $this->context->smarty->assign('payline_recurring_payment_configuration', $this->renderForm('recurring-web-payment'));
         $this->context->smarty->assign('payline_subscribe_payment_configuration', $this->renderForm('subscribe-payment'));
         $this->context->smarty->assign('payline_contracts_configuration', $this->renderForm('contracts'));
+        $this->context->smarty->assign('payline_logs_viewing', $this->renderForm('logs'));
         return $this->context->smarty->fetch($this->local_path.'views/templates/admin/configure.tpl');
     }
 
@@ -2257,33 +2280,39 @@ class payline extends PaymentModule
                     ),
                     'input' => array(
                         array(
-                            'type' => 'html',
-                            'name' => '
-                            <h2>' . $this->l('Select and sort the contracts you want to make available to your customers') . '</h2>
-                            <p>' . $this->l('You can sort contracts by using drag & drop method') . '</p>',
-                            'col' => 12,
-                            'label' => '',
-                        ),
-                        array(
                             'type' => 'contracts',
                             'name' => 'PAYLINE_CONTRACTS',
-                            'label' => '',
-                            'col' => 12,
+                            'label' => '
+                            <h2>' . $this->l('Select and sort the contracts you want to make available to your customers') . '</h2>
+                            <p>' . $this->l('You can sort contracts by using drag & drop method') . '</p>',                            'col' => 12,
                             'contractsList' => $contractsList,
                             'enabledContracts' => $enabledContracts,
                         ),
                         array(
-                            'type' => 'html',
-                            'name' => '
-                            <h2>' . $this->l('Select and sort the alternative contracts you want to make available to your customers') . '</h2>
-                            <p>' . $this->l('You can sort contracts by using drag & drop method') . '</p>',
-                            'col' => 12,
-                            'label' => '',
+                            'type' => 'switch',
+                            'label' => $this->l('Use same alt contracts as main'),
+                            'name' => 'PAYLINE_ALT_CONTRACTS_AS_MAIN',
+                            'is_bool' => true,
+                            'values' => array(
+                                array(
+                                    'id' => 'active_on',
+                                    'value' => true,
+                                    'label' => $this->l('Enabled'),
+                                ),
+                                array(
+                                    'id' => 'active_off',
+                                    'value' => false,
+                                    'label' => $this->l('Disabled'),
+                                )
+                            ),
                         ),
                         array(
                             'type' => 'contracts',
                             'name' => 'PAYLINE_ALT_CONTRACTS',
-                            'label' => '',
+                            'depends' => 'PAYLINE_ALT_CONTRACTS_AS_MAIN',
+                            'label' => '
+                            <h2>' . $this->l('Select and sort the alternative contracts you want to make available to your customers') . '</h2>
+                            <p>' . $this->l('You can sort contracts by using drag & drop method') . '</p>',
                             'col' => 12,
                             'contractsList' => $fallbackContractsList,
                             'enabledContracts' => $enabledFallbackContracts,
@@ -2294,7 +2323,69 @@ class payline extends PaymentModule
                     ),
                 ),
             );
+        } elseif ($tabName == 'logs') {
+            $logsFiles = $this->getPaylineLogsFilesList();
+
+            Media::addJsDef([
+                'logs_viewer_controller_url' => $this->context->link->getAdminLink('AdminPaylineLogsAjax'),
+                'logs_viewer_controller' => 'AdminPaylineLogsAjax',
+            ]);
+
+            return array(
+                'form' => array(
+                    'legend' => array(
+                        'title' => $this->l('Payline logs'),
+                        'icon' => 'icon-file-text',
+                    ),
+                    'input' => array(
+
+                        array(
+                            'type' => 'log-files',
+                            'name' => 'PAYLINE_LOGS_FILES',
+                            'label' => '',
+                            'col' => 12,
+                            'logsFilesList' => $logsFiles,
+                        ),
+
+                        array(
+                            'type' => 'log-data',
+                            'name' => 'PAYLINE_LOGS_LINES',
+                            'label' => '',
+                            'col' => 12,
+                        ),
+                    ),
+                ),
+            );
         }
+    }
+
+    /**
+     * Return list of payline logs
+     * @since 2.3.6
+     * @return array
+     */
+    public function getPaylineLogsFilesList()
+    {
+        $logsFiles = [];
+        $directoryPath = $this->getPaylineLogsDirectory();
+        if (is_dir($directoryPath)) {
+            $files = scandir($directoryPath, SCANDIR_SORT_DESCENDING);
+            $files = array_diff($files, array('.', '..')); // Exclure les entrées spéciales
+            foreach ($files as $file) {
+                $logsFiles[] = pathinfo($file, PATHINFO_FILENAME);
+            }
+        }
+        return $logsFiles;
+    }
+
+    /**
+     * Return payline logs directory
+     * @since 2.3.6
+     * @return string
+     */
+    public function getPaylineLogsDirectory()
+    {
+        return _PS_ROOT_DIR_.'/var/logs/' . $this->name . DIRECTORY_SEPARATOR;
     }
 
     /**
@@ -2408,6 +2499,7 @@ class payline extends PaymentModule
         } elseif ($tabName == 'contracts') {
             return array(
                 'PAYLINE_CONTRACTS' => Configuration::get('PAYLINE_CONTRACTS'),
+                'PAYLINE_ALT_CONTRACTS_AS_MAIN' => Configuration::get('PAYLINE_ALT_CONTRACTS_AS_MAIN'),
                 'PAYLINE_ALT_CONTRACTS' => Configuration::get('PAYLINE_ALT_CONTRACTS'),
             );
         }
@@ -3187,5 +3279,18 @@ class payline extends PaymentModule
         $this->context->smarty->assign('payline_custom_amount_refund_indication', $this->l('Please add product quantity to refund and amount including tax'));
         $this->context->smarty->assign('payline_custom_amount_refund_shipping', $this->l('Add shipping amount including tax to payline refund'));
         return $this->context->smarty->fetch(_PS_MODULE_DIR_ . $this->name . '/views/templates/hook/partialRefund.tpl');
+    }
+
+    /**
+     * @param string $operator
+     * @param string $versionToCompare
+     * @return bool
+     */
+    protected function prestaVersionCompare($operator = ">=", $versionToCompare = '1.7.0.0')
+    {
+        if(version_compare(_PS_VERSION_, $versionToCompare, $operator)){
+            return true;
+        }
+        return false;
     }
 }

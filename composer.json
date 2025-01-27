@@ -6,7 +6,8 @@
         "prepend-autoloader": false
     },
     "require" : {
-        "monext/payline-sdk" : "4.*"
+        "monext/monext-php": "^4.77",
+        "ddtraceweb/monolog-parser": "^1.3"
     },
     "type": "prestashop-module"
 }

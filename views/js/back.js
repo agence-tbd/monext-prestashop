@@ -36,7 +36,7 @@ function payline_initProductsAutocomplete()
                 }
             } else {
                 var rows = JSON.parse(data);
-                for (var index in rows) { 
+                for (var index in rows) {
                     var row = rows[index];
                     parsed[parsed.length] = {
                         data: row,
@@ -59,7 +59,7 @@ function payline_initProductsAutocomplete()
     $('#product_autocomplete_input').setOptions({
         extraParams: {
             excludeIds: payline_getProductsIds(),
-            exclude_packs : 0 
+            exclude_packs : 0
         },
     });
 };
@@ -99,9 +99,9 @@ function payline_addProduct(event, data, formatted)
     $inputProducts.val($inputProducts.val() + productId + ',');
     $('#product_autocomplete_input').val('');
     $('#product_autocomplete_input').setOptions({
-        extraParams: { 
+        extraParams: {
         	excludeIds : payline_getProductsIds(),
-        	exclude_packs : 0  
+        	exclude_packs : 0
         }
     });
 };
@@ -145,7 +145,7 @@ function payline_delProduct(id)
     $('#product_autocomplete_input').setOptions({
         extraParams: {
         	excludeIds : payline_getProductsIds(),
-        	exclude_packs : 0 
+        	exclude_packs : 0
         }
     });
 };
@@ -196,6 +196,37 @@ $(document).ready(function() {
         }
         inputId = $(this).attr('data-input-id');
         $('#' + inputId).val(JSON.stringify($('#payline-contracts-list-' + inputId).sortable('toArray', {attribute: 'data-contract-id'})));
+    });
+
+    $(document).on('change', 'select#logs-files-list-select', function() {
+      $('#log_display').html("<p>Loading...</p>");
+
+      $.ajax({
+        url: window.logs_viewer_controller_url,
+        type: 'GET',
+        dataType: 'JSON',
+        data: {
+          action: 'getLogsLines',
+          logfile: $('#logs-files-list-select').val(),
+          ajax: true,
+        },
+        success: (data) => {
+          $('#log_display').html("");
+
+          data.forEach((logLine) => {
+            let html = "<p>" + logLine.date + " - " + logLine.logger + " " + logLine.level + " : " + logLine.message;
+
+            if (logLine['context'].length !== 0) {
+              html += "<details><summary>[ View Context ]</summary><div style='white-space: pre'>"
+                + JSON.stringify(logLine.context, null, 2)
+                + "</div></details>";
+            }
+
+            html += "</p>";
+            $('#log_display').append(html);
+          })
+        },
+      });
     });
 
     // Product autocomplete

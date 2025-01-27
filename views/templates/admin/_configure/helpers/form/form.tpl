@@ -7,6 +7,7 @@
 *
 *}
 
+
 {extends file="helpers/form/form.tpl"}
 
 {block name="label"}
@@ -17,6 +18,9 @@
 
 {block name="input"}
 	{if $input.type == 'contracts'}
+		{if isset($input.label) && $input.label }
+			{$input.label|escape:'UTF-8'}
+		{/if}
 		<input type="hidden" id="{$input.name|escape:'html':'UTF-8'}" name="{$input.name|escape:'html':'UTF-8'}" value={$input.enabledContracts|json_encode nofilter} />
 		<ol id="payline-contracts-list-{$input.name|escape:'html':'UTF-8'}" class="list-group payline-contracts-list" data-input-id="{$input.name|escape:'html':'UTF-8'}">
 		{foreach from=$input.contractsList item=payline_contract}
@@ -39,6 +43,23 @@
 				</div>
 			</li>
 		{/foreach}
+		{if isset($input.depends) && $input.depends }
+			<script type="text/javascript">
+				$(document).ready(function() {
+					const dependElements = document.querySelectorAll('input[name="{$input.depends|escape:'html':'UTF-8'}"]');
+					const currentElem = document.querySelector('input[name="{$input.name|escape:'html':'UTF-8'}"]').closest('div');
+					displayCurrent = function() {
+						dependElements.forEach(radio =>
+								radio.checked && (currentElem.style.display = !radio.value ? 'block' : 'none')
+						);
+					};
+					dependElements.forEach(radio =>
+							radio.addEventListener('click', displayCurrent)
+					);
+					displayCurrent();
+				});
+			</script>
+		{/if}
 		</ol>
 	{elseif $input.type == 'product-selector'}
 		<div class="form-group{if isset($input.form_group_class)}{$input.form_group_class|escape:'html':'UTF-8'}{/if}">
@@ -68,7 +89,20 @@
 				</div>
 			</div>
 		</div>
-	{else}
+  {elseif $input.type == 'log-files'}
+    <select name="logs-files-list-select" id="logs-files-list-select">
+      <option value="">-- {l s='Please select a log file' mod='payline'} --</option>
+      {foreach from=$input.logsFilesList item=payline_logs_files}
+        <option value="{$payline_logs_files|escape:'html':'UTF-8'}">{$payline_logs_files}</option>
+      {/foreach}
+    </select>
+  {elseif $input.type == 'log-data'}
+    <div id="log_container" class="card log_container">
+      <div id="log_display" class="card-body log_display">
+        <p>{l s='Please select a log file' mod='payline'}</p>
+      </div>
+    </div>
+  {else}
 		{$smarty.block.parent}
 	{/if}
 {/block}
