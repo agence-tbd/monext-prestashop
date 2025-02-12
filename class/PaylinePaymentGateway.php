@@ -545,6 +545,12 @@ class PaylinePaymentGateway
         // Add payment method to private data
         $instance->addPrivateData(array('key' => 'payment_method', 'value' => (int)$paymentMethod));
         $instance->addPrivateData(array('key' => 'OrderSaleChannel', 'value' => 'DESKTOP'));
+
+        $paylineSmartdisplayParams = Configuration::get('PAYLINE_SMARTDISPLAY_PARAM');
+        if (!empty($paylineSmartdisplayParams)) {
+            $instance->addPrivateData(array('key' => 'display.rule.param', 'value' => $paylineSmartdisplayParams));
+        }
+
         $result = $instance->doWebPayment($params);
 
         if ($error = self::getErrorResponse($result)) {

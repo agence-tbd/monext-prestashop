@@ -249,6 +249,7 @@ class payline extends PaymentModule
         Configuration::updateValue('PAYLINE_MERCHANT_ID', false);
         Configuration::updateValue('PAYLINE_ACCESS_KEY', false);
         Configuration::updateValue('PAYLINE_POS', false);
+        Configuration::updateValue('PAYLINE_SMARTDISPLAY_PARAM', false);
         Configuration::updateValue('PAYLINE_PROXY_HOST', false);
         Configuration::updateValue('PAYLINE_PROXY_PORT', false);
         Configuration::updateValue('PAYLINE_PROXY_LOGIN', false);
@@ -1822,6 +1823,13 @@ class payline extends PaymentModule
                             ),
                         ),
                         array(
+                            'type' => 'text',
+                            'name' => 'PAYLINE_SMARTDISPLAY_PARAM',
+                            'label' => $this->l('Smartdisplay parameter'),
+                            'desc' => $this->l('Added in doWebPayment privateData as display.rule.param'),
+                            'placeholder' => '',
+                        ),
+                        array(
                             'type' => 'html',
                             'name' => '
                             <h2>' . $this->l('Proxy configuration') . '</h2>',
@@ -2497,6 +2505,7 @@ class payline extends PaymentModule
                 'PAYLINE_MERCHANT_ID' => Configuration::get('PAYLINE_MERCHANT_ID'),
                 'PAYLINE_ACCESS_KEY' => Configuration::get('PAYLINE_ACCESS_KEY'),
                 'PAYLINE_POS' => Configuration::get('PAYLINE_POS'),
+                'PAYLINE_SMARTDISPLAY_PARAM' => Configuration::get('PAYLINE_SMARTDISPLAY_PARAM'),
                 'PAYLINE_PROXY_HOST' => Configuration::get('PAYLINE_PROXY_HOST'),
                 'PAYLINE_PROXY_PORT' => Configuration::get('PAYLINE_PROXY_PORT'),
                 'PAYLINE_PROXY_LOGIN' => Configuration::get('PAYLINE_PROXY_LOGIN'),
@@ -2545,6 +2554,7 @@ class payline extends PaymentModule
                 'PAYLINE_MERCHANT_ID',
                 'PAYLINE_ACCESS_KEY',
                 'PAYLINE_POS',
+                'PAYLINE_SMARTDISPLAY_PARAM',
                 'PAYLINE_PROXY_HOST',
                 'PAYLINE_PROXY_PORT',
                 'PAYLINE_PROXY_LOGIN',
