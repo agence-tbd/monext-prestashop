@@ -25,3 +25,9 @@
 	width: 14px;
 	color: #777;
 }
+
+.PaylineWidget.pl-container-default .pl-pay-btn[disabled] {
+  filter: grayscale(1);
+  pointer-events: all;
+}
+

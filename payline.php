@@ -313,8 +313,11 @@ class payline extends PaymentModule
             $this->context->controller->errors[] = $this->l('Please try to use another payment method or another credit card.');
         }
         // Add front.css on OPC
-        if ($this->isPaymentAvailable() && $this->prestaVersionCompare('<') && $this->context->controller instanceof OrderOpcController) {
-            $this->context->controller->addCSS($this->_path.'views/css/front.css');
+        if ($this->isPaymentAvailable()) {
+            if ($this->context->controller instanceof OrderController ||
+                ($this->prestaVersionCompare('<') && $this->context->controller instanceof OrderOpcController)) {
+                $this->context->controller->addCSS($this->_path . 'views/css/front.css');
+            }
         }
     }
 
@@ -995,6 +998,23 @@ class payline extends PaymentModule
                 } else {
                     $webCash = null;
                 }
+            } elseif ($uxMode == 'column' || $uxMode == 'tab') {
+                list($paymentRequest, $paymentRequestParams) = PaylinePaymentGateway::createPaymentRequest($this->context, PaylinePaymentGateway::WEB_PAYMENT_METHOD);
+                if (!empty($paymentRequest['token'])) {
+                    $this->smarty->assign(array(
+                        'payline_title' => $webCashTitle,
+                        'payline_subtitle' => $webCashSubTitle,
+                        'payline_token' => $paymentRequest['token'],
+                        'payline_assets' => PaylinePaymentGateway::getAssetsToRegister(),
+                        'payline_ux_mode' => Configuration::get('PAYLINE_WEB_CASH_UX'),
+                        'jsSelector' => 'paylineWidgetColumn'
+                    ));
+
+                    $webCash->setAdditionalInformation($this->fetch('module:payline/views/templates/front/1.7/payment.tpl'));
+                } else {
+                    $webCash = null;
+                }
+
             } else {
                 $webCash->setAction($this->context->link->getModuleLink($this->name, 'payment', array(), true));
             }
@@ -2903,11 +2923,7 @@ class payline extends PaymentModule
         if (!empty($paymentInfos['formatedPrivateDataList']['payment_method']) && $paymentInfos['formatedPrivateDataList']['payment_method'] == PaylinePaymentGateway::SUBSCRIBE_PAYMENT_METHOD) {
             Tools::redirect($this->context->link->getPageLink('order', true, $this->context->language->id, $urlParams));
         } else {
-            if (Configuration::get('PAYLINE_WEB_CASH_UX') == 'lightbox' || Configuration::get('PAYLINE_WEB_CASH_UX') == 'redirect') {
                 Tools::redirect($this->context->link->getPageLink('order', true, $this->context->language->id, $urlParams));
-            } else {
-                Tools::redirect($this->context->link->getModuleLink($this->name, 'payment', $urlParams, true));
-            }
         }
     }
 
