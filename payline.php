@@ -263,7 +263,7 @@ class payline extends PaymentModule
             // Generic hooks
             || !$this->registerHook('displayBackOfficeHeader')
             || !$this->registerHook('displayHeader')
-            || !$this->registerHook('displayAdminOrderLeft')
+            || !$this->registerHook('displayAdminOrderMain')
             || !$this->registerHook('displayCustomerAccount')
             || !$this->registerHook('actionAdminOrdersListingResultsModifier')
             || !$this->registerHook('actionObjectOrderSlipAddBefore')
@@ -575,7 +575,7 @@ class payline extends PaymentModule
      * @param array $params
      * @return string
      */
-    public function hookDisplayAdminOrderLeft($params)
+    public function hookDisplayAdminOrderMain($params)
     {
         // Check if module is enabled
         if (!$this->active) {
@@ -640,10 +640,16 @@ class payline extends PaymentModule
                 foreach ($orderPayments as $orderPayment) {
                     if (preg_match('/payline/i', $orderPayment->payment_method) && !empty($orderPayment->transaction_id)) {
                         $transaction = PaylinePaymentGateway::getTransactionInformations($orderPayment->transaction_id);
-                        if (isset($transaction['associatedTransactionsList']) && isset($transaction['associatedTransactionsList']['associatedTransactions']) && sizeof($transaction['associatedTransactionsList']['associatedTransactions'])) {
-                            foreach ($transaction['associatedTransactionsList']['associatedTransactions'] as $associatedTransaction) {
-                                $transactionsList[$associatedTransaction['transactionId']] = $associatedTransaction;
-                                $transactionsList[$associatedTransaction['transactionId']]['originalTransaction'] = $transaction;
+                        if (!empty($transaction['associatedTransactionsList']['associatedTransactions'])) {
+                            $associatedTransactions = $transaction['associatedTransactionsList']['associatedTransactions'];
+                            if (array_key_exists('transactionId', $associatedTransactions)) {
+                                $transactionsList[$associatedTransactions['transactionId']] = $associatedTransactions;
+                                $transactionsList[$associatedTransactions['transactionId']]['originalTransaction'] = $transaction;
+                            } else {
+                                foreach ($associatedTransactions as $associatedTransaction) {
+                                    $transactionsList[$associatedTransaction['transactionId']] = $associatedTransaction;
+                                    $transactionsList[$associatedTransaction['transactionId']]['originalTransaction'] = $transaction;
+                                }
                             }
                         }
                     }
