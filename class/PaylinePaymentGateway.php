@@ -13,7 +13,7 @@ class PaylinePaymentGateway
     private static $merchantSettings = null;
 
     // API version to pass on WS call
-    const API_VERSION = 26;
+    const API_VERSION = 34;
 
     const WEB_PAYMENT_METHOD = 1;
     const RECURRING_PAYMENT_METHOD = 2;
