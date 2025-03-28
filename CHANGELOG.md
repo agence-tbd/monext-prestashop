@@ -1,3 +1,13 @@
+2.3.7
+===
+<h2>released on 2024-03-03</h2>
+<ul>
+<li>Add floa payment method</li>
+<li>Fix upgrade script for refund</li>
+<li>Fix partial refund with shipping fee</li>
+<li>Add display.rule.param for smartdisplay</li>
+</ul>
+
 2.3.6
 ===
 <h2>released on 2024-11-07</h2>

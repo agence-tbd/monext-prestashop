@@ -4,7 +4,7 @@
  *
  * @author    Monext <support@payline.com>
  * @copyright Monext - http://www.payline.com
- * @version   2.3.6
+ * @version   2.3.7
  */
 
 if (!defined('_PS_VERSION_')) {
@@ -98,7 +98,7 @@ class payline extends PaymentModule
         $this->name = 'payline';
         $this->tab = 'payments_gateways';
         $this->module_key = '';
-        $this->version = '2.3.6';
+        $this->version = '2.3.7';
         $this->ps_versions_compliancy = array('min' => '1.7.1.0', 'max' => _PS_VERSION_);
         $this->author = 'Monext';
 
@@ -249,6 +249,7 @@ class payline extends PaymentModule
         Configuration::updateValue('PAYLINE_MERCHANT_ID', false);
         Configuration::updateValue('PAYLINE_ACCESS_KEY', false);
         Configuration::updateValue('PAYLINE_POS', false);
+        Configuration::updateValue('PAYLINE_SMARTDISPLAY_PARAM', false);
         Configuration::updateValue('PAYLINE_PROXY_HOST', false);
         Configuration::updateValue('PAYLINE_PROXY_PORT', false);
         Configuration::updateValue('PAYLINE_PROXY_LOGIN', false);
@@ -263,7 +264,7 @@ class payline extends PaymentModule
             // Generic hooks
             || !$this->registerHook('displayBackOfficeHeader')
             || !$this->registerHook('displayHeader')
-            || !$this->registerHook('displayAdminOrderLeft')
+            || !$this->registerHook('displayAdminOrderMain')
             || !$this->registerHook('displayCustomerAccount')
             || !$this->registerHook('actionAdminOrdersListingResultsModifier')
             || !$this->registerHook('actionObjectOrderSlipAddBefore')
@@ -575,7 +576,7 @@ class payline extends PaymentModule
      * @param array $params
      * @return string
      */
-    public function hookDisplayAdminOrderLeft($params)
+    public function hookDisplayAdminOrderMain($params)
     {
         // Check if module is enabled
         if (!$this->active) {
@@ -640,10 +641,16 @@ class payline extends PaymentModule
                 foreach ($orderPayments as $orderPayment) {
                     if (preg_match('/payline/i', $orderPayment->payment_method) && !empty($orderPayment->transaction_id)) {
                         $transaction = PaylinePaymentGateway::getTransactionInformations($orderPayment->transaction_id);
-                        if (isset($transaction['associatedTransactionsList']) && isset($transaction['associatedTransactionsList']['associatedTransactions']) && sizeof($transaction['associatedTransactionsList']['associatedTransactions'])) {
-                            foreach ($transaction['associatedTransactionsList']['associatedTransactions'] as $associatedTransaction) {
-                                $transactionsList[$associatedTransaction['transactionId']] = $associatedTransaction;
-                                $transactionsList[$associatedTransaction['transactionId']]['originalTransaction'] = $transaction;
+                        if (!empty($transaction['associatedTransactionsList']['associatedTransactions'])) {
+                            $associatedTransactions = $transaction['associatedTransactionsList']['associatedTransactions'];
+                            if (array_key_exists('transactionId', $associatedTransactions)) {
+                                $transactionsList[$associatedTransactions['transactionId']] = $associatedTransactions;
+                                $transactionsList[$associatedTransactions['transactionId']]['originalTransaction'] = $transaction;
+                            } else {
+                                foreach ($associatedTransactions as $associatedTransaction) {
+                                    $transactionsList[$associatedTransaction['transactionId']] = $associatedTransaction;
+                                    $transactionsList[$associatedTransaction['transactionId']]['originalTransaction'] = $transaction;
+                                }
                             }
                         }
                     }
@@ -793,61 +800,64 @@ class payline extends PaymentModule
 
         $order = new Order($params['object']->id_order);
 
-        if (Tools::getValue('doPartialRefundPayline') && Tools::getValue('doPartialRefundPaylineIncludeShippingValue')
-        ) {
-            $amountToRefund = (float)$params['object']->total_products_tax_incl + (float)$params['object']->total_shipping_tax_incl;
-        } else {
-            $amountToRefund = (float)$params['object']->total_products_tax_incl;
-        }
+        $amountToRefund = (float)$params['object']->total_products_tax_incl + (float)$params['object']->total_shipping_tax_incl;
 
-        if (Context::getContext()->employee->isLoggedBack()
-            && Validate::isLoadedObject($order)
-            && $order->module == $this->name
-            && $order->hasBeenPaid()
-            && $amountToRefund > 0
-            && !Tools::getValue('generateDiscount') && !Tools::getValue('generateDiscountRefund'))
-        {
-            $orderPayments = OrderPayment::getByOrderReference($order->reference);
-            if (sizeof($orderPayments)) {
-                // Retrieve transaction ID
-                $paylineTransaction = current($orderPayments);
-                $idTransaction = $paylineTransaction->transaction_id;
+        try {
+            if (Context::getContext()->employee->isLoggedBack()
+                && Validate::isLoadedObject($order)
+                && $order->module == $this->name
+                && $order->hasBeenPaid()
+                && $amountToRefund > 0
+                && !Tools::getValue('generateDiscount') && !Tools::getValue('generateDiscountRefund'))
+            {
+                $orderPayments = OrderPayment::getByOrderReference($order->reference);
+                if (sizeof($orderPayments)) {
+                    // Retrieve transaction ID
+                    $paylineTransaction = current($orderPayments);
+                    $idTransaction = $paylineTransaction->transaction_id;
 
-                // Get transaction informations
-                $transaction = PaylinePaymentGateway::getTransactionInformations($idTransaction);
-                if (PaylinePaymentGateway::isValidResponse($transaction)) {
-                    $refund = PaylinePaymentGateway::refundTransaction($idTransaction, $amountToRefund, $this->l('Manual partial refund from PrestaShop BackOffice'));
-                    if (PaylinePaymentGateway::isValidResponse($refund)) {
-                        // Refund OK
-                        $orderInvoice = new OrderInvoice($order->invoice_number);
-                        if (!Validate::isLoadedObject($orderInvoice)) {
-                            $orderInvoice = null;
+                    // Get transaction informations
+                    $transaction = PaylinePaymentGateway::getTransactionInformations($idTransaction);
+                    if (PaylinePaymentGateway::isValidResponse($transaction)) {
+                        $refund = PaylinePaymentGateway::refundTransaction($idTransaction, $amountToRefund, $this->l('Manual partial refund from PrestaShop BackOffice'));
+                        if (PaylinePaymentGateway::isValidResponse($refund)) {
+                            // Refund OK
+                            $orderInvoice = new OrderInvoice($order->invoice_number);
+                            if (!Validate::isLoadedObject($orderInvoice)) {
+                                $orderInvoice = null;
+                            }
+
+                            // Wait 1s because Payline API may take some time to be updated after a refund
+                            sleep(1);
+
+                            // Partial refund OK, show confirmation message.
+                            // Unshowed msg, override by src/PrestaShopBundle/Controller/Admin/Sell/Order/OrderController.php:603
+                            $this->context->controller->confirmations[] = $this->l('Order was successfully partially refunded');
+                        } else {
+                            // Refund NOK
+                            $errors = PaylinePaymentGateway::getErrorResponse($refund);
+                            $errorsMessage = sprintf($this->l('Unable to process the refund, Payline reported the following error: “%s“ (code %s)'), $errors['longMessage'], $errors['code']);
+                            $this->context->controller->errors[] = $errorsMessage;
+                            throw new Exception($errorsMessage);
                         }
-
-                        // Wait 1s because Payline API may take some time to be updated after a refund
-                        sleep(1);
-
-                        // Partial refund OK, show confirmation message
-                        $this->context->controller->confirmations[] = $this->l('Order was successfully partially refunded');
                     } else {
-                        // Refund NOK
-                        $errors = PaylinePaymentGateway::getErrorResponse($refund);
+                        $errors = PaylinePaymentGateway::getErrorResponse($transaction);
                         $errorsMessage = sprintf($this->l('Unable to process the refund, Payline reported the following error: “%s“ (code %s)'), $errors['longMessage'], $errors['code']);
                         $this->context->controller->errors[] = $errorsMessage;
                         throw new Exception($errorsMessage);
                     }
                 } else {
-                    $errors = PaylinePaymentGateway::getErrorResponse($transaction);
-                    $errorsMessage = sprintf($this->l('Unable to process the refund, Payline reported the following error: “%s“ (code %s)'), $errors['longMessage'], $errors['code']);
+                    $errorsMessage = $this->l('Unable to find any Payline transaction ID on this order');
                     $this->context->controller->errors[] = $errorsMessage;
                     throw new Exception($errorsMessage);
                 }
-            } else {
-                $errorsMessage = $this->l('Unable to find any Payline transaction ID on this order');
-                $this->context->controller->errors[] = $errorsMessage;
-                throw new Exception($errorsMessage);
             }
+        } catch (Exception $e) {
+            $this->context->container->get('session')->getFlashBag()->add('error', $e->getMessage());
+            $orderViewUrl = $this->context->link->getAdminLink('AdminOrders', true, [], ['id_order' => $order->id, 'vieworder' => 1]);
+            Tools::redirectAdmin($orderViewUrl);
         }
+
     }
 
     /**
@@ -1816,6 +1826,13 @@ class payline extends PaymentModule
                             ),
                         ),
                         array(
+                            'type' => 'text',
+                            'name' => 'PAYLINE_SMARTDISPLAY_PARAM',
+                            'label' => $this->l('Smartdisplay parameter'),
+                            'desc' => $this->l('Added in doWebPayment privateData as display.rule.param'),
+                            'placeholder' => '',
+                        ),
+                        array(
                             'type' => 'html',
                             'name' => '
                             <h2>' . $this->l('Proxy configuration') . '</h2>',
@@ -2491,6 +2508,7 @@ class payline extends PaymentModule
                 'PAYLINE_MERCHANT_ID' => Configuration::get('PAYLINE_MERCHANT_ID'),
                 'PAYLINE_ACCESS_KEY' => Configuration::get('PAYLINE_ACCESS_KEY'),
                 'PAYLINE_POS' => Configuration::get('PAYLINE_POS'),
+                'PAYLINE_SMARTDISPLAY_PARAM' => Configuration::get('PAYLINE_SMARTDISPLAY_PARAM'),
                 'PAYLINE_PROXY_HOST' => Configuration::get('PAYLINE_PROXY_HOST'),
                 'PAYLINE_PROXY_PORT' => Configuration::get('PAYLINE_PROXY_PORT'),
                 'PAYLINE_PROXY_LOGIN' => Configuration::get('PAYLINE_PROXY_LOGIN'),
@@ -2539,6 +2557,7 @@ class payline extends PaymentModule
                 'PAYLINE_MERCHANT_ID',
                 'PAYLINE_ACCESS_KEY',
                 'PAYLINE_POS',
+                'PAYLINE_SMARTDISPLAY_PARAM',
                 'PAYLINE_PROXY_HOST',
                 'PAYLINE_PROXY_PORT',
                 'PAYLINE_PROXY_LOGIN',
@@ -3261,24 +3280,6 @@ class payline extends PaymentModule
         }
 
         return $order->addOrderPayment($amountPaid, null, $transactionId, null, $date, $invoice);
-    }
-
-    /**
-     * Display additional Payline input on Partial refund form to refund a custom amount
-     * @param $params
-     * @return string
-     */
-    public function hookDisplayAdminOrder($params)
-    {
-        $order = new Order($params['id_order']);
-        if (!Validate::isLoadedObject($order)) {
-            return '';
-        }
-
-        $this->context->smarty->assign('payline_custom_amount_refund', $this->l('Payline refund online'));
-        $this->context->smarty->assign('payline_custom_amount_refund_indication', $this->l('Please add product quantity to refund and amount including tax'));
-        $this->context->smarty->assign('payline_custom_amount_refund_shipping', $this->l('Add shipping amount including tax to payline refund'));
-        return $this->context->smarty->fetch(_PS_MODULE_DIR_ . $this->name . '/views/templates/hook/partialRefund.tpl');
     }
 
     /**

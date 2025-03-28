@@ -439,8 +439,8 @@ class PaylinePaymentGateway
                 'taxes' => round(($orderTaxes - $shippingTaxes) * 100),
                 'date' => date('d/m/Y H:i'),
                 'currency' => $context->currency->iso_code_num,
-                'deliveryCharge' => round($context->cart->getTotalShippingCost() * 100),
-    //            'discountAmount' => round($totalDiscounts * 100),
+                'deliveryMode' => 1,
+                'deliveryCharge' => round($context->cart->getTotalShippingCost() * 100)
             ),
             'contracts' => (sizeof($contracts) ? $contracts : null),
             'secondContracts' => (sizeof($secondContracts) ? $secondContracts : null),
@@ -479,6 +479,7 @@ class PaylinePaymentGateway
                 $params['buyer']['title'] = 1;
             }
         }
+        $params['billingAddress']['title'] = ($params['buyer']['title'])?:4;
         // Set buyer wallet id
         if (($paymentMethod == self::WEB_PAYMENT_METHOD && Configuration::get('PAYLINE_WEB_CASH_BY_WALLET'))
             || ($paymentMethod == self::RECURRING_PAYMENT_METHOD && Configuration::get('PAYLINE_RECURRING_BY_WALLET'))
@@ -543,6 +544,13 @@ class PaylinePaymentGateway
         $instance->addPrivateData(array('key' => 'secure_key', 'value' => (string)$context->cart->secure_key));
         // Add payment method to private data
         $instance->addPrivateData(array('key' => 'payment_method', 'value' => (int)$paymentMethod));
+        $instance->addPrivateData(array('key' => 'OrderSaleChannel', 'value' => 'DESKTOP'));
+
+        $paylineSmartdisplayParams = Configuration::get('PAYLINE_SMARTDISPLAY_PARAM');
+        if (!empty($paylineSmartdisplayParams)) {
+            $instance->addPrivateData(array('key' => 'display.rule.param', 'value' => $paylineSmartdisplayParams));
+        }
+
         $result = $instance->doWebPayment($params);
 
         if ($error = self::getErrorResponse($result)) {
@@ -755,6 +763,7 @@ class PaylinePaymentGateway
             'zipCode' => substr($address->postcode, 0, 12),
             'country' => substr($countryIsoCode, 0, 15),
             'state' => substr($stateIsoCode, 0, 15),
+            'phoneType' => 1,
             'phone' => substr(str_replace(array(' ', '.', '(', ')', '-'), '', $address->phone), 0, 15),
             'mobilePhone' => substr(str_replace(array(' ', '.', '(', ')', '-'), '', $address->phone_mobile), 0, 15),
         );
