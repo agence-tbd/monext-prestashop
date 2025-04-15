@@ -106,7 +106,7 @@ class payline extends PaymentModule
         $this->tab = 'payments_gateways';
         $this->module_key = '';
         $this->version = '2.3.8';
-        $this->ps_versions_compliancy = array('min' => '1.7.1.0', 'max' => _PS_VERSION_);
+        $this->ps_versions_compliancy = array('min' => '1.7.7', 'max' => _PS_VERSION_);
         $this->author = 'Monext';
 
         $this->is_eu_compatible = 1;
@@ -732,7 +732,7 @@ class payline extends PaymentModule
             && Validate::isLoadedObject($params['newOrderStatus'])
             && ($params['newOrderStatus']->id == Configuration::get('PS_OS_REFUND'))
         ) {
-            if ($this->partialRefund){
+            if ($this->partialRefund || Tools::getValue('paylineProcessFullRefund') ){
                 return;
             }
 
