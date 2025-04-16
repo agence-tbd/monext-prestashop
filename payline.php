@@ -280,7 +280,6 @@ class payline extends PaymentModule
             || !$this->registerHook('displayPaymentReturn')
             || !$this->registerHook('paymentOptions')
             || !$this->registerHook('actionObjectOrderDetailUpdateAfter')
-            || !$this->registerHook('displayAdminOrder')
             // Install custom order state
             || !$this->createCustomOrderState()
             // Install tables
