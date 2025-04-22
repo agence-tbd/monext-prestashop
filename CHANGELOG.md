@@ -1,3 +1,11 @@
+2.3.8
+===
+<h2>released on 2024-04-22</h2>
+<ul>
+<li>Add reset/refund on order state error</li>
+<li>Upgrade api version from 26 to 34</li>
+</ul>
+
 2.3.7
 ===
 <h2>released on 2024-03-03</h2>
