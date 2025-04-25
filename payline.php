@@ -4,8 +4,10 @@
  *
  * @author    Monext <support@payline.com>
  * @copyright Monext - http://www.payline.com
- * @version   2.3.7
+ * @version   2.3.8
  */
+
+use PrestaShop\PrestaShop\Core\Domain\Order\Exception\DuplicateOrderCartException;
 
 if (!defined('_PS_VERSION_')) {
     exit;
@@ -77,8 +79,13 @@ class payline extends PaymentModule
 
     // Errors constants
     const INVALID_AMOUNT = 1;
+
     const INVALID_CART_ID = 2;
+
     const SUBSCRIPTION_ERROR = 3;
+
+    const ORDER_CREATION_ERROR = 4;
+
 
     protected $is_eu_compatible;
 
@@ -98,7 +105,7 @@ class payline extends PaymentModule
         $this->name = 'payline';
         $this->tab = 'payments_gateways';
         $this->module_key = '';
-        $this->version = '2.3.7';
+        $this->version = '2.3.8';
         $this->ps_versions_compliancy = array('min' => '1.7.1.0', 'max' => _PS_VERSION_);
         $this->author = 'Monext';
 
@@ -2745,9 +2752,16 @@ class payline extends PaymentModule
                     false,
                     $secureKey
                 );
+
                 if ($validateOrderResult) {
                     $order = new Order($this->currentOrder);
                     if (Validate::isLoadedObject($order)) {
+
+                        $idOrderErrorState = Configuration::get('PS_OS_ERROR');
+                        if($order->getCurrentState() == $idOrderErrorState) {
+                            throw new Exception('payline::createOrder - order is in error state');
+                        }
+
                         // Save token and payment record id (if defined) for later usage
                         PaylineToken::insert($order, $cart, $token, $paymentRecordId, $paymentInfos['transaction']['id']);
 
@@ -2766,9 +2780,36 @@ class payline extends PaymentModule
                     }
                 }
             } catch (Exception $e) {
+                $errorCode = self::ORDER_CREATION_ERROR;
+                if(!empty($paymentInfos['transaction']['id'])) {
+                    $idTransaction = $paymentInfos['transaction']['id'];
+                    $reset = PaylinePaymentGateway::resetTransaction($idTransaction, $this->l('Automatic reset on error order creation'));
+                    if (PaylinePaymentGateway::isValidResponse($reset)) {
+                        //TODO: Add message
+
+                    } else {
+                        $refund = PaylinePaymentGateway::refundTransaction($idTransaction, null, $this->l('Automatic refund on error order creation'));
+                        if (PaylinePaymentGateway::isValidResponse($refund)) {
+                            //TODO: Add message
+                        }
+                    }
+                }
+
+                $result = $cart->duplicate();
+                if (false === $result || !isset($result['cart'])) {
+                    throw new DuplicateOrderCartException(sprintf('Cannot duplicate cart from order "%s"', $order->reference));
+                } else {
+                    $this->context->cart = $result['cart'];
+                    $this->context->cookie->id_cart = $result['cart']->id;
+                    $this->context->cookie->write();
+                }
+
                 $validateOrderResult = false;
                 $errorMessage = $e->getMessage();
                 PrestaShopLogger::addLog('payline::createOrder - Failed to create order: ' . $errorMessage, 1, null, 'Cart', $cart->id);
+            } catch (DuplicateOrderCartException $e) {
+                $errorMessage = $e->getMessage();
+                //TODO: Add message
             }
         } elseif ($cart->secure_key == $paymentInfos['formatedPrivateDataList']['secure_key']) {
             // Secure key is OK
@@ -2846,7 +2887,7 @@ class payline extends PaymentModule
         }
 
         // Order has been created, redirect customer to confirmation page
-        if (isset($order) && $order instanceof Order && Validate::isLoadedObject($order)) {
+        if (empty($errorCode) && isset($order) && $order instanceof Order && Validate::isLoadedObject($order)) {
             Tools::redirect('index.php?controller=order-confirmation&id_cart='.$idCart.'&id_module='.$this->id.'&id_order='.$this->currentOrder.'&key='.$this->context->customer->secure_key);
         }
 
