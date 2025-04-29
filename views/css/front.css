@@ -26,7 +26,8 @@
 	color: #777;
 }
 
-.PaylineWidget.pl-container-default .pl-pay-btn[disabled] {
+.PaylineWidget.pl-container-default .pl-pay-btn[disabled],
+.PaylineWidget.pl-container-default .pl-pay-btn-container img[disabled]{
   filter: grayscale(1);
   pointer-events: all;
 }
