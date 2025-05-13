@@ -264,6 +264,9 @@ class payline extends PaymentModule
         Configuration::updateValue('PAYLINE_CONTRACTS', false);
         Configuration::updateValue('PAYLINE_ALT_CONTRACTS_AS_MAIN', false);
         Configuration::updateValue('PAYLINE_ALT_CONTRACTS', false);
+        Configuration::updateValue('PAYLINE_ERROR_REFUSED', 'Your payment has been refused');
+        Configuration::updateValue('PAYLINE_ERROR_CANCELLED', 'Your payment has been cancelled');
+        Configuration::updateValue('PAYLINE_ERROR_ERROR', 'Your payment is in error');
 
 
         // Run parent install process, register to hooks, then force update module position
@@ -300,8 +303,16 @@ class payline extends PaymentModule
     public function hookDisplayHeader()
     {
         // Display alert if payment failed
-        if (($this->context->controller instanceof OrderController || $this->context->controller instanceof OrderOpcController || $this->context->controller instanceof paylinePaymentModuleFrontController) && Tools::getValue('paylineError') && Tools::getValue('paylinetoken')) {
-            $this->context->controller->errors[] = $this->l('There was an error while processing your previous payment.');
+        if (($this->context->controller instanceof OrderController || $this->context->controller instanceof OrderOpcController || $this->context->controller instanceof paylinePaymentModuleFrontController) && Tools::getIsset('paylineError') && Tools::getValue('paylinetoken')) {
+
+            $errorMessage = Configuration::get('PAYLINE_ERROR_'. Tools::getValue('paylineError'));
+            if(!empty($errorMessage)){
+                $this->context->controller->errors[] = $this->l($errorMessage);
+            }else{
+                $this->context->controller->errors[] = $this->l('There was an error while processing your previous payment.');
+                $this->context->controller->errors[] = $this->l('Please try to use another payment method or another credit card.');
+            }
+
             if (Tools::getIsset('paylineErrorCode')) {
                 $errorCode = (int)Tools::getValue('paylineErrorCode');
                 $humanErrorCode = $this->getHumanErrorCode($errorCode);
@@ -309,7 +320,6 @@ class payline extends PaymentModule
                     $this->context->controller->errors[] = $humanErrorCode;
                 }
             }
-            $this->context->controller->errors[] = $this->l('Please try to use another payment method or another credit card.');
         }
         // Add front.css on OPC
         if ($this->isPaymentAvailable()) {
@@ -1892,6 +1902,32 @@ class payline extends PaymentModule
                             'label' => $this->l('Password'),
                             'placeholder' => '',
                         ),
+                        array(
+                            'type' => 'html',
+                            'name' => '
+                            <h2>' . $this->l('Error message') . '</h2>',
+                        ),
+                        array(
+                            'type' => 'text',
+                            'desc' => '',
+                            'name' => 'PAYLINE_ERROR_REFUSED',
+                            'label' => $this->l('Type Refused'),
+                            'placeholder' => '',
+                        ),
+                        array(
+                            'type' => 'text',
+                            'desc' => '',
+                            'name' => 'PAYLINE_ERROR_CANCELLED',
+                            'label' => $this->l('Type Cancelled'),
+                            'placeholder' => '',
+                        ),
+                        array(
+                            'type' => 'text',
+                            'desc' => '',
+                            'name' => 'PAYLINE_ERROR_ERROR',
+                            'label' => $this->l('Type Error'),
+                            'placeholder' => '',
+                        ),
                     ),
                     'submit' => array(
                         'title' => $this->l('Save'),
@@ -2539,6 +2575,9 @@ class payline extends PaymentModule
                 'PAYLINE_PROXY_PORT' => Configuration::get('PAYLINE_PROXY_PORT'),
                 'PAYLINE_PROXY_LOGIN' => Configuration::get('PAYLINE_PROXY_LOGIN'),
                 'PAYLINE_PROXY_PASSWORD' => Configuration::get('PAYLINE_PROXY_PASSWORD'),
+                'PAYLINE_ERROR_REFUSED' => Configuration::get('PAYLINE_ERROR_REFUSED'),
+                'PAYLINE_ERROR_CANCELLED' => Configuration::get('PAYLINE_ERROR_CANCELLED'),
+                'PAYLINE_ERROR_ERROR' => Configuration::get('PAYLINE_ERROR_ERROR'),
             );
         } elseif ($tabName == 'contracts') {
             return array(
@@ -2911,7 +2950,7 @@ class payline extends PaymentModule
         }
 
         $urlParams = array(
-            'paylineError' => 1,
+            'paylineError' => $paymentInfos['result']['shortMessage'],
             'paylinetoken' => $token,
         );
         if (isset($errorCode)) {
