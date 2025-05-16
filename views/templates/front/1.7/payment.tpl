@@ -129,7 +129,7 @@
         data-auto-init="true"
         data-token="{$payline_token}"
         data-template="{$payline_ux_mode}"
-        data-embeddedredirectionallowed="false"
+        data-embeddedredirectionallowed="true"
         data-event-didshowstate="onDidShowState"
       >
       </div>
