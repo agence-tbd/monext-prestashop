@@ -484,7 +484,8 @@ class PaylinePaymentGateway
         if (($paymentMethod == self::WEB_PAYMENT_METHOD && Configuration::get('PAYLINE_WEB_CASH_BY_WALLET'))
             || ($paymentMethod == self::RECURRING_PAYMENT_METHOD && Configuration::get('PAYLINE_RECURRING_BY_WALLET'))
         ) {
-            $params['buyer']['walletId'] = Tools::encrypt((int)$context->customer->id);
+            $walletId = (PaylineWallet::getWalletByIdCustomer($context->customer->id))?:PaylineWallet::generateWalletId($context->customer->id);
+            $params['buyer']['walletId'] = $walletId;
         }
         // Customization
         if (!empty($customPaymentPageCode)) {
@@ -1229,4 +1230,23 @@ class PaylinePaymentGateway
         return $enabledContractsList;
     }
 
+    /**
+     * Create a request for Web Wallet
+     * @since 2.3.10
+     * @param array $params
+     * @return array
+     */
+    public static function createManageWebWalletRequest($params)
+    {
+        // Get Payline instance
+        $instance = self::getInstance();
+
+        $result = $instance->manageWebWallet($params);
+
+        if ($error = self::getErrorResponse($result)) {
+            $instance->getLogger()->addError(__FUNCTION__ , $error);
+        }
+
+        return $result;
+    }
 }

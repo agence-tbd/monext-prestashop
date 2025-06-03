@@ -4,7 +4,7 @@
  *
  * @author    Monext <support@payline.com>
  * @copyright Monext - http://www.payline.com
- * @version   2.3.9
+ * @version   2.3.10
  */
 
 use PrestaShop\PrestaShop\Core\Domain\Order\Exception\DuplicateOrderCartException;
@@ -16,6 +16,7 @@ if (!defined('_PS_VERSION_')) {
 require_once(_PS_ROOT_DIR_ . DIRECTORY_SEPARATOR . 'modules' . DIRECTORY_SEPARATOR . 'payline' . DIRECTORY_SEPARATOR . 'lib' . DIRECTORY_SEPARATOR . 'autoload.php');
 require_once(_PS_ROOT_DIR_ . DIRECTORY_SEPARATOR . 'modules' . DIRECTORY_SEPARATOR . 'payline' . DIRECTORY_SEPARATOR . 'class' . DIRECTORY_SEPARATOR . 'PaylineToken.php');
 require_once(_PS_ROOT_DIR_ . DIRECTORY_SEPARATOR . 'modules' . DIRECTORY_SEPARATOR . 'payline' . DIRECTORY_SEPARATOR . 'class' . DIRECTORY_SEPARATOR . 'PaylinePaymentGateway.php');
+require_once(_PS_ROOT_DIR_ . DIRECTORY_SEPARATOR . 'modules' . DIRECTORY_SEPARATOR . 'payline' . DIRECTORY_SEPARATOR . 'class' . DIRECTORY_SEPARATOR . 'PaylineWallet.php');
 
 class payline extends PaymentModule
 {
@@ -105,8 +106,8 @@ class payline extends PaymentModule
         $this->name = 'payline';
         $this->tab = 'payments_gateways';
         $this->module_key = '';
-        $this->version = '2.3.9';
-        $this->ps_versions_compliancy = array('min' => '1.7.7', 'max' => _PS_VERSION_);
+        $this->version = '2.3.10';
+        $this->ps_versions_compliancy = array('min' => '1.7.1.0', 'max' => _PS_VERSION_);
         $this->author = 'Monext';
 
         $this->is_eu_compatible = 1;
@@ -137,8 +138,9 @@ class payline extends PaymentModule
      */
     protected function createTables()
     {
-        $res = Db::getInstance()->execute('
-        CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'payline_token` (
+        $sql = [];
+
+        $sql[] = 'CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'payline_token` (
             `id_order` int(10) UNSIGNED NOT NULL,
             `id_cart` int(10) UNSIGNED NOT NULL,
             `token` varchar(255) NULL,
@@ -146,9 +148,23 @@ class payline extends PaymentModule
             `transaction_id` varchar(50),
             UNIQUE `id_order` (`id_order`),
             UNIQUE `id_cart` (`id_cart`)
-        ) ENGINE='._MYSQL_ENGINE_.' CHARSET=utf8');
+        ) ENGINE='._MYSQL_ENGINE_.' CHARSET=utf8';
 
-        return $res;
+        $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'payline_wallet_id` (
+            `id_customer` int(10) NOT NULL,
+            `wallet_id` varchar(50) NOT NULL,
+            `date_add` datetime NOT NULL,
+            UNIQUE `id_customer` (`id_customer`),
+            UNIQUE `wallet_id` (`wallet_id`)
+        ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8';
+
+        foreach ($sql as $query) {
+            if (!Db::getInstance()->execute($query)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -579,6 +595,8 @@ class payline extends PaymentModule
 
         $this->context->smarty->assign(array(
             'subscriptionControllerLink' => $this->context->link->getModuleLink('payline', 'subscriptions', array(), true),
+            'walletControllerLink' => $this->context->link->getModuleLink('payline', 'wallet', array(), true),
+            'walletIsEnable' => Configuration::get('PAYLINE_WEB_CASH_BY_WALLET'),
         ));
         if ($this->prestaVersionCompare()) {
             $output .= $this->context->smarty->fetch($this->local_path.'views/templates/hook/1.7/customer_account.tpl');
