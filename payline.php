@@ -1726,7 +1726,7 @@ class payline extends PaymentModule
             $orderStatusListForSelect = array();
             foreach (OrderState::getOrderStates($this->context->language->id) as $os) {
                 // Ignore order states related to a specific module or error/refund/waiting to be paid states
-                if (!empty($os['module_name']) || in_array((int)$os['id_order_state'], array(_PS_OS_ERROR_, _PS_OS_REFUND_, (int)Configuration::get('PAYLINE_ID_STATE_AUTOR'), (int)Configuration::get('PAYLINE_ID_STATE_PENDING'), (int)Configuration::get('PAYLINE_ID_ORDER_STATE_NX'), (int)Configuration::get('PAYLINE_ID_STATE_ALERT_SCHEDULE')))) {
+                if ($os['logable'] !=1) {
                     continue;
                 }
                 $orderStatusListForSelect[] = array(
