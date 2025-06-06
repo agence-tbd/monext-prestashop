@@ -845,12 +845,11 @@ class PaylinePaymentGateway
     }
 
     /**
-     * Return payment informations
-     * @since 2.0.0
-     * @param string $token
+     * Return payment informations provided by API call
+     * @param $token
      * @return array
      */
-    public static function getPaymentInformations($token)
+    public static function getWebPaymentDetails($token)
     {
         $instance = self::getInstance();
         $params = array(
@@ -861,6 +860,42 @@ class PaylinePaymentGateway
         // Loop into result, format and sort some fields
         self::formatAndSortResult($result);
 
+        return $result;
+    }
+
+    /**
+     * Return payment informations provided by ps_payline_web_payment table if possible
+     * @since 2.0.0
+     * @param string $token
+     * @return array
+     */
+    public static function getPaymentInformations($token)
+    {
+        $result = PaylinePayment::getPaymentByToken($token);
+
+        if(empty($result)){
+            $result = self::getWebPaymentDetails($token);
+
+            $additionalData = [
+                'payment' => $result['payment'],
+                'formatedPrivateDataList' => $result['formatedPrivateDataList']
+            ];
+            if(isset($result['billingRecordList'])){
+                $additionalData['billingRecordList'] = $result['billingRecordList'];
+                $additionalData['paymentRecordId'] = $result['paymentRecordId'];
+            }
+
+            PaylinePayment::insert(
+                self::getCartIdFromOrderReference($result['order']['ref']),
+                $token,
+                $result['result']['code'],
+                $result['result']['shortMessage'],
+                'payment',
+                $result['contractNumber'],
+                $result['transaction']['id'],
+                $additionalData
+            );
+        }
         return $result;
     }
 

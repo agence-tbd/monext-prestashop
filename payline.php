@@ -17,6 +17,7 @@ require_once(_PS_ROOT_DIR_ . DIRECTORY_SEPARATOR . 'modules' . DIRECTORY_SEPARAT
 require_once(_PS_ROOT_DIR_ . DIRECTORY_SEPARATOR . 'modules' . DIRECTORY_SEPARATOR . 'payline' . DIRECTORY_SEPARATOR . 'class' . DIRECTORY_SEPARATOR . 'PaylineToken.php');
 require_once(_PS_ROOT_DIR_ . DIRECTORY_SEPARATOR . 'modules' . DIRECTORY_SEPARATOR . 'payline' . DIRECTORY_SEPARATOR . 'class' . DIRECTORY_SEPARATOR . 'PaylinePaymentGateway.php');
 require_once(_PS_ROOT_DIR_ . DIRECTORY_SEPARATOR . 'modules' . DIRECTORY_SEPARATOR . 'payline' . DIRECTORY_SEPARATOR . 'class' . DIRECTORY_SEPARATOR . 'PaylineWallet.php');
+require_once(_PS_ROOT_DIR_ . DIRECTORY_SEPARATOR . 'modules' . DIRECTORY_SEPARATOR . 'payline' . DIRECTORY_SEPARATOR . 'class' . DIRECTORY_SEPARATOR . 'PaylinePayment.php');
 
 class payline extends PaymentModule
 {
@@ -156,6 +157,19 @@ class payline extends PaymentModule
             `date_add` datetime NOT NULL,
             UNIQUE `id_customer` (`id_customer`),
             UNIQUE `wallet_id` (`wallet_id`)
+        ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8';
+
+        $sql[]  = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'payline_web_payment` (
+            `id_cart` int(10) NOT NULL,
+            `token` varchar(255) NOT NULL,
+            `result_code` varchar(6) NOT NULL,
+            `message` varchar(50) NOT NULL,
+            `type` varchar(255) NOT NULL,
+            `contract_number` varchar(255) NOT NULL,
+            `transaction_id` varchar(50) NOT NULL,
+            `additional_data` TEXT,
+            `date_add` datetime NOT NULL,
+            UNIQUE `token` (`token`),
         ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8';
 
         foreach ($sql as $query) {
@@ -2936,7 +2950,7 @@ class payline extends PaymentModule
      */
     public function processCustomerPaymentReturn($token)
     {
-        $paymentInfos = PaylinePaymentGateway::getPaymentInformations($token);
+        $paymentInfos = PaylinePaymentGateway::getWebPaymentDetails($token);
         $errorCode = null;
         $order = null;
 
@@ -2992,7 +3006,7 @@ class payline extends PaymentModule
     public function processNotification($token)
     {
         $validateOrderResult = false;
-        $paymentInfos = PaylinePaymentGateway::getPaymentInformations($token);
+        $paymentInfos = PaylinePaymentGateway::getWebPaymentDetails($token);
         // Check if id_cart and secure_key are the same
         if (isset($paymentInfos['formatedPrivateDataList']) && is_array($paymentInfos['formatedPrivateDataList'])
             && isset($paymentInfos['formatedPrivateDataList']['id_cart'])
