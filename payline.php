@@ -4,7 +4,7 @@
  *
  * @author    Monext <support@payline.com>
  * @copyright Monext - http://www.payline.com
- * @version   2.3.8
+ * @version   2.3.9
  */
 
 use PrestaShop\PrestaShop\Core\Domain\Order\Exception\DuplicateOrderCartException;
@@ -105,8 +105,8 @@ class payline extends PaymentModule
         $this->name = 'payline';
         $this->tab = 'payments_gateways';
         $this->module_key = '';
-        $this->version = '2.3.8';
-        $this->ps_versions_compliancy = array('min' => '1.7.1.0', 'max' => _PS_VERSION_);
+        $this->version = '2.3.9';
+        $this->ps_versions_compliancy = array('min' => '1.7.7', 'max' => _PS_VERSION_);
         $this->author = 'Monext';
 
         $this->is_eu_compatible = 1;
@@ -264,6 +264,9 @@ class payline extends PaymentModule
         Configuration::updateValue('PAYLINE_CONTRACTS', false);
         Configuration::updateValue('PAYLINE_ALT_CONTRACTS_AS_MAIN', false);
         Configuration::updateValue('PAYLINE_ALT_CONTRACTS', false);
+        Configuration::updateValue('PAYLINE_ERROR_REFUSED', 'Your payment has been refused');
+        Configuration::updateValue('PAYLINE_ERROR_CANCELLED', 'Your payment has been cancelled');
+        Configuration::updateValue('PAYLINE_ERROR_ERROR', 'Your payment is in error');
 
 
         // Run parent install process, register to hooks, then force update module position
@@ -280,7 +283,6 @@ class payline extends PaymentModule
             || !$this->registerHook('displayPaymentReturn')
             || !$this->registerHook('paymentOptions')
             || !$this->registerHook('actionObjectOrderDetailUpdateAfter')
-            || !$this->registerHook('displayAdminOrder')
             // Install custom order state
             || !$this->createCustomOrderState()
             // Install tables
@@ -301,8 +303,16 @@ class payline extends PaymentModule
     public function hookDisplayHeader()
     {
         // Display alert if payment failed
-        if (($this->context->controller instanceof OrderController || $this->context->controller instanceof OrderOpcController || $this->context->controller instanceof paylinePaymentModuleFrontController) && Tools::getValue('paylineError') && Tools::getValue('paylinetoken')) {
-            $this->context->controller->errors[] = $this->l('There was an error while processing your previous payment.');
+        if (($this->context->controller instanceof OrderController || $this->context->controller instanceof OrderOpcController || $this->context->controller instanceof paylinePaymentModuleFrontController) && Tools::getIsset('paylineError') && Tools::getValue('paylinetoken')) {
+
+            $errorMessage = Configuration::get('PAYLINE_ERROR_'. Tools::getValue('paylineError'));
+            if(!empty($errorMessage)){
+                $this->context->controller->errors[] = $this->l($errorMessage);
+            }else{
+                $this->context->controller->errors[] = $this->l('There was an error while processing your previous payment.');
+                $this->context->controller->errors[] = $this->l('Please try to use another payment method or another credit card.');
+            }
+
             if (Tools::getIsset('paylineErrorCode')) {
                 $errorCode = (int)Tools::getValue('paylineErrorCode');
                 $humanErrorCode = $this->getHumanErrorCode($errorCode);
@@ -310,11 +320,13 @@ class payline extends PaymentModule
                     $this->context->controller->errors[] = $humanErrorCode;
                 }
             }
-            $this->context->controller->errors[] = $this->l('Please try to use another payment method or another credit card.');
         }
         // Add front.css on OPC
-        if ($this->isPaymentAvailable() && $this->prestaVersionCompare('<') && $this->context->controller instanceof OrderOpcController) {
-            $this->context->controller->addCSS($this->_path.'views/css/front.css');
+        if ($this->isPaymentAvailable()) {
+            if ($this->context->controller instanceof OrderController ||
+                ($this->prestaVersionCompare('<') && $this->context->controller instanceof OrderOpcController)) {
+                $this->context->controller->addCSS($this->_path . 'views/css/front.css');
+            }
         }
     }
 
@@ -732,7 +744,7 @@ class payline extends PaymentModule
             && Validate::isLoadedObject($params['newOrderStatus'])
             && ($params['newOrderStatus']->id == Configuration::get('PS_OS_REFUND'))
         ) {
-            if ($this->partialRefund){
+            if ($this->partialRefund || Tools::getValue('paylineProcessFullRefund') ){
                 return;
             }
 
@@ -995,6 +1007,23 @@ class payline extends PaymentModule
                 } else {
                     $webCash = null;
                 }
+            } elseif ($uxMode == 'column' || $uxMode == 'tab') {
+                list($paymentRequest, $paymentRequestParams) = PaylinePaymentGateway::createPaymentRequest($this->context, PaylinePaymentGateway::WEB_PAYMENT_METHOD);
+                if (!empty($paymentRequest['token'])) {
+                    $this->smarty->assign(array(
+                        'payline_title' => $webCashTitle,
+                        'payline_subtitle' => $webCashSubTitle,
+                        'payline_token' => $paymentRequest['token'],
+                        'payline_assets' => PaylinePaymentGateway::getAssetsToRegister(),
+                        'payline_ux_mode' => Configuration::get('PAYLINE_WEB_CASH_UX'),
+                        'jsSelector' => 'paylineWidgetColumn'
+                    ));
+
+                    $webCash->setAdditionalInformation($this->fetch('module:payline/views/templates/front/1.7/payment.tpl'));
+                } else {
+                    $webCash = null;
+                }
+
             } else {
                 $webCash->setAction($this->context->link->getModuleLink($this->name, 'payment', array(), true));
             }
@@ -1873,6 +1902,32 @@ class payline extends PaymentModule
                             'label' => $this->l('Password'),
                             'placeholder' => '',
                         ),
+                        array(
+                            'type' => 'html',
+                            'name' => '
+                            <h2>' . $this->l('Error message') . '</h2>',
+                        ),
+                        array(
+                            'type' => 'text',
+                            'desc' => '',
+                            'name' => 'PAYLINE_ERROR_REFUSED',
+                            'label' => $this->l('Type Refused'),
+                            'placeholder' => '',
+                        ),
+                        array(
+                            'type' => 'text',
+                            'desc' => '',
+                            'name' => 'PAYLINE_ERROR_CANCELLED',
+                            'label' => $this->l('Type Cancelled'),
+                            'placeholder' => '',
+                        ),
+                        array(
+                            'type' => 'text',
+                            'desc' => '',
+                            'name' => 'PAYLINE_ERROR_ERROR',
+                            'label' => $this->l('Type Error'),
+                            'placeholder' => '',
+                        ),
                     ),
                     'submit' => array(
                         'title' => $this->l('Save'),
@@ -2520,6 +2575,9 @@ class payline extends PaymentModule
                 'PAYLINE_PROXY_PORT' => Configuration::get('PAYLINE_PROXY_PORT'),
                 'PAYLINE_PROXY_LOGIN' => Configuration::get('PAYLINE_PROXY_LOGIN'),
                 'PAYLINE_PROXY_PASSWORD' => Configuration::get('PAYLINE_PROXY_PASSWORD'),
+                'PAYLINE_ERROR_REFUSED' => Configuration::get('PAYLINE_ERROR_REFUSED'),
+                'PAYLINE_ERROR_CANCELLED' => Configuration::get('PAYLINE_ERROR_CANCELLED'),
+                'PAYLINE_ERROR_ERROR' => Configuration::get('PAYLINE_ERROR_ERROR'),
             );
         } elseif ($tabName == 'contracts') {
             return array(
@@ -2892,7 +2950,7 @@ class payline extends PaymentModule
         }
 
         $urlParams = array(
-            'paylineError' => 1,
+            'paylineError' => $paymentInfos['result']['shortMessage'],
             'paylinetoken' => $token,
         );
         if (isset($errorCode)) {
@@ -2903,11 +2961,7 @@ class payline extends PaymentModule
         if (!empty($paymentInfos['formatedPrivateDataList']['payment_method']) && $paymentInfos['formatedPrivateDataList']['payment_method'] == PaylinePaymentGateway::SUBSCRIBE_PAYMENT_METHOD) {
             Tools::redirect($this->context->link->getPageLink('order', true, $this->context->language->id, $urlParams));
         } else {
-            if (Configuration::get('PAYLINE_WEB_CASH_UX') == 'lightbox' || Configuration::get('PAYLINE_WEB_CASH_UX') == 'redirect') {
                 Tools::redirect($this->context->link->getPageLink('order', true, $this->context->language->id, $urlParams));
-            } else {
-                Tools::redirect($this->context->link->getModuleLink($this->name, 'payment', $urlParams, true));
-            }
         }
     }
 

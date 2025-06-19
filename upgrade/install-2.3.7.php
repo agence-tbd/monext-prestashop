@@ -23,7 +23,6 @@ function upgrade_module_2_3_7($module)
 
     $module->registerHook('displayAdminOrderMain');
     $module->registerHook('displayPaymentReturn');
-    $module->registerHook('displayAdminOrder');
 
     return true;
 }
