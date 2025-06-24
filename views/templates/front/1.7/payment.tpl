@@ -121,6 +121,22 @@
       });
     });
   }
+
+  function onFinalStateHasBeenReached (e) {
+    if ( e.state === "PAYMENT_SUCCESS" ) {
+      //--> Redirect to success page
+      //--> Ticket is hidden by CSS
+      //--> Wait for DOM update to simulate a click on the ticket confirmation button
+      window.setTimeout(() => {
+        const ticketConfirmationButton = document.getElementById("pl-ticket-default-ticket_btn");
+        if ( ticketConfirmationButton ) {
+          ticketConfirmationButton.click();
+        }
+      }, 0);
+    }
+  }
+
+
 </script>
 
 <section id="content" data-js-selector="{$jsSelector}">
@@ -131,6 +147,7 @@
         data-template="{$payline_ux_mode}"
         data-embeddedredirectionallowed="true"
         data-event-didshowstate="onDidShowState"
+        data-event-finalstatehasbeenreached="onFinalStateHasBeenReached"
       >
       </div>
 </section>
