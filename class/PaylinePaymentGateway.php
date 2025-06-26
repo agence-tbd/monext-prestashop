@@ -117,10 +117,6 @@ class PaylinePaymentGateway
             // Get merchant settings
             $merchantSettings = self::getInstance()->getMerchantSettings(array());
 
-
-
-
-
             $result = (is_array($merchantSettings) && !empty($merchantSettings['result']) && self::isValidResponse($merchantSettings));
             if ($result) {
 
@@ -203,6 +199,16 @@ class PaylinePaymentGateway
         return null;
     }
 
+
+    public static function getContractsForCurrentPos() {
+
+        $currentPos = Configuration::get('PAYLINE_POS');
+        $enabledContracts = PaylinePaymentGateway::getEnabledContracts();
+        $contractsList = PaylinePaymentGateway::getContractsByPosLabel($currentPos, $enabledContracts, true);
+
+        return $contractsList;
+    }
+
     /**
      * Get all contracts related to a specific POS
      * @since 2.0.0
@@ -233,6 +239,7 @@ class PaylinePaymentGateway
                 foreach ($contractsList as &$contract) {
                     $contractId = $contract['cardType'] . '-' . $contract['contractNumber'];
                     $contract['enabled'] = (in_array($contractId, $enabledContracts));
+                    $contract['wallet'] = (in_array($contract['cardType'], ['AMEX', 'CB']));
                     if (!$contract['enabled']) {
                         $disabledContracts[] = $contract;
                     }

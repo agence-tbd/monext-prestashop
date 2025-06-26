@@ -37,3 +37,27 @@
 #log_display details[open] {
   padding: 4px;
 }
+
+#paylineCtaPreviewContainer {
+  padding: 40px 60px;
+  border: 1px solid #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  gap: 15px;
+}
+
+#paylineCtaPreview {
+  padding: 10px 26px;
+  font-size: 20px;
+  border: none;
+  border-radius: 3px;
+  color: #fff;
+  background-color: #26A434;
+}
+
+#paylineCtaPreview:hover {
+  background-color: #1c7b27;
+  text-decoration: underline;
+}

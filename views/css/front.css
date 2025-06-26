@@ -32,3 +32,13 @@
   pointer-events: all;
 }
 
+.PaylineWidget.pl-container-default .pl-pay-btn-container,
+.PaylineWidget.pl-container-default .pl-pay-btn-container .pl-pay-btn,
+.PaylineWidget.pl-container-default .pl-pay-btn-container .pl-text-under-cta {
+	word-wrap: break-word;
+	max-width: 100%;
+}
+
+body .PaylineWidget .pl-wallet-layout .pl-wallets .pl-pay-btn-container {
+	max-height: unset;
+}

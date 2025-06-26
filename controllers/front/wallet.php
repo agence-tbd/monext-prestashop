@@ -35,7 +35,13 @@ class paylineWalletModuleFrontController extends ModuleFrontController
     {
         parent::initContent();
 
-        $contracts = PaylinePaymentGateway::getEnabledContracts(true);
+        $contracts = [];
+        foreach (PaylinePaymentGateway::getContractsForCurrentPos() as $contract) {
+            if(!empty($contract['wallet'])) {
+                $contracts[] = $contract['contractNumber'];
+            }
+        }
+
         $walletId = (PaylineWallet::getWalletByIdCustomer($this->context->customer->id))?:PaylineWallet::generateWalletId($this->context->customer->id);
 
         $params = array(
