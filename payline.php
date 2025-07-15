@@ -1919,7 +1919,7 @@ class payline extends PaymentModule
             return array(
                 'form' => array(
                     'legend' => array(
-                    'title' => $this->l('Payline configuration'),
+                    'title' => $this->l('Monext configuration'),
                     'icon' => 'icon-money',
                     ),
                     'input' => array(
@@ -1945,8 +1945,8 @@ class payline extends PaymentModule
                         array(
                             'type' => 'html',
                             'name' => '
-                            <h2>' . $this->l('Payline API credentials') . '</h2>
-                            <p>' . $this->l('You can retrieve all theses credentials here:') . ' <a target="_blank" href="https://www.payline.com/">https://www.payline.com/</a></p>',
+                            <h2>' . $this->l('Monext API credentials') . '</h2>
+                            <p>' . $this->l('You can retrieve all theses credentials here:') . ' <a target="_blank" href="https://www.monext.com/">https://www.monext.com/</a></p>',
                         ),
                         array(
                             'form_group_class' => ($paylineCheckCredentials === false ? 'has-error' : 'has-success'),
@@ -2073,7 +2073,7 @@ class payline extends PaymentModule
                             'label' => $this->l('Enable simple payment'),
                             'name' => 'PAYLINE_WEB_CASH_ENABLE',
                             'is_bool' => true,
-                            'desc' => $this->l('choose wether to display Payline simple payment in your checkout or not'),
+                            'desc' => $this->l('choose wether to display Monext simple payment in your checkout or not'),
                             'values' => array(
                                 array(
                                     'id' => 'active_on',
@@ -2344,7 +2344,7 @@ class payline extends PaymentModule
                             'label' => $this->l('Enable Nx payment'),
                             'name' => 'PAYLINE_RECURRING_ENABLE',
                             'is_bool' => true,
-                            'desc' => $this->l('choose wether to display Payline recurring payment in your checkout or not'),
+                            'desc' => $this->l('choose wether to display Monext recurring payment in your checkout or not'),
                             'values' => array(
                                 array(
                                     'id' => 'active_on',
@@ -2495,7 +2495,7 @@ class payline extends PaymentModule
                             'label' => $this->l('Enable recurring payment'),
                             'name' => 'PAYLINE_SUBSCRIBE_ENABLE',
                             'is_bool' => true,
-                            'desc' => $this->l('choose wether to display Payline subscribe payment in your checkout or not'),
+                            'desc' => $this->l('choose wether to display Monext subscribe payment in your checkout or not'),
                             'values' => array(
                                 array(
                                     'id' => 'active_on',
@@ -2676,7 +2676,7 @@ class payline extends PaymentModule
             return array(
                 'form' => array(
                     'legend' => array(
-                        'title' => $this->l('Payline logs'),
+                        'title' => $this->l('Monext logs'),
                         'icon' => 'icon-file-text',
                     ),
                     'input' => array(

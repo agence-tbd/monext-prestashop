@@ -8,8 +8,8 @@
 *}
 <div id="modulecontent" class="clearfix">
     <div class="col-lg-2">
-        <a href="#landing-configuration" class="list-group-item {if $payline_active_tab == 'landing'}selected_tab active{/if}" data-toggle="tab" data-identifier="payline-configuration"><i class="icon icon-question"></i>&nbsp;&nbsp;{l s='What is Payline?' mod='payline'}</a>
-        <a href="#payline-configuration" class="list-group-item {if $payline_active_tab == 'payline'}selected_tab active{/if}{if empty($payline_api_status)} list-group-item-danger{/if}" data-toggle="tab" data-identifier="payline-configuration"><i class="icon icon-money"></i>&nbsp;&nbsp;{l s='Payline configuration' mod='payline'}</a>
+        <a href="#landing-configuration" class="list-group-item {if $payline_active_tab == 'landing'}selected_tab active{/if}" data-toggle="tab" data-identifier="payline-configuration"><i class="icon icon-question"></i>&nbsp;&nbsp;{l s='What is Monext?' mod='payline'}</a>
+        <a href="#payline-configuration" class="list-group-item {if $payline_active_tab == 'payline'}selected_tab active{/if}{if empty($payline_api_status)} list-group-item-danger{/if}" data-toggle="tab" data-identifier="payline-configuration"><i class="icon icon-money"></i>&nbsp;&nbsp;{l s='Monext configuration' mod='payline'}</a>
         <a href="#web-payment-configuration" class="list-group-item {if $payline_active_tab == 'web-payment'}selected_tab active{/if}" data-toggle="tab" data-identifier="web-payment-configuration"><i class="icon icon-cogs"></i>&nbsp;&nbsp;{l s='Simple payment' mod='payline'}</a>
         <a href="#recurring-payment-configuration" class="list-group-item {if $payline_active_tab == 'recurring-web-payment'}selected_tab active{/if}" data-toggle="tab" data-identifier="recurring-payment-configuration"><i class="icon icon-cogs"></i>&nbsp;&nbsp;{l s='Nx payment' mod='payline'}</a>
         <a href="#subscribe-payment-configuration" class="list-group-item {if $payline_active_tab == 'subscribe-payment'}selected_tab active{/if}" data-toggle="tab" data-identifier="subscribe-payment-configuration"><i class="icon icon-cogs"></i>&nbsp;&nbsp;{l s='Recurring payment' mod='payline'}</a>
