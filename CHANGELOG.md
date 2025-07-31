@@ -1,5 +1,16 @@
 ## Changelog
 
+###  2.3.10 - 2025-07-31
+* Add manage wallet on customer account
+* Ad capture on events
+* Store payment transaction in DB
+* Add user widget customisation
+* Improve widget customisation in checkout
+
+#### Environment (Development, QA validation)
+* Prestashop version: 8.2.1
+
+
 ###  2.3.9 - 2025-06-16
 * Widget fully integrated 
 * Allow error messages personalization
