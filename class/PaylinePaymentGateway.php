@@ -117,10 +117,6 @@ class PaylinePaymentGateway
             // Get merchant settings
             $merchantSettings = self::getInstance()->getMerchantSettings(array());
 
-
-
-
-
             $result = (is_array($merchantSettings) && !empty($merchantSettings['result']) && self::isValidResponse($merchantSettings));
             if ($result) {
 
@@ -203,6 +199,16 @@ class PaylinePaymentGateway
         return null;
     }
 
+
+    public static function getContractsForCurrentPos() {
+
+        $currentPos = Configuration::get('PAYLINE_POS');
+        $enabledContracts = PaylinePaymentGateway::getEnabledContracts();
+        $contractsList = PaylinePaymentGateway::getContractsByPosLabel($currentPos, $enabledContracts, true);
+
+        return $contractsList;
+    }
+
     /**
      * Get all contracts related to a specific POS
      * @since 2.0.0
@@ -233,6 +239,7 @@ class PaylinePaymentGateway
                 foreach ($contractsList as &$contract) {
                     $contractId = $contract['cardType'] . '-' . $contract['contractNumber'];
                     $contract['enabled'] = (in_array($contractId, $enabledContracts));
+                    $contract['wallet'] = (in_array($contract['cardType'], ['AMEX', 'CB']));
                     if (!$contract['enabled']) {
                         $disabledContracts[] = $contract;
                     }
@@ -484,7 +491,8 @@ class PaylinePaymentGateway
         if (($paymentMethod == self::WEB_PAYMENT_METHOD && Configuration::get('PAYLINE_WEB_CASH_BY_WALLET'))
             || ($paymentMethod == self::RECURRING_PAYMENT_METHOD && Configuration::get('PAYLINE_RECURRING_BY_WALLET'))
         ) {
-            $params['buyer']['walletId'] = Tools::encrypt((int)$context->customer->id);
+            $walletId = (PaylineWallet::getWalletByIdCustomer($context->customer->id))?:PaylineWallet::generateWalletId($context->customer->id);
+            $params['buyer']['walletId'] = $walletId;
         }
         // Customization
         if (!empty($customPaymentPageCode)) {
@@ -844,12 +852,11 @@ class PaylinePaymentGateway
     }
 
     /**
-     * Return payment informations
-     * @since 2.0.0
-     * @param string $token
+     * Return payment informations provided by API call
+     * @param $token
      * @return array
      */
-    public static function getPaymentInformations($token)
+    public static function getWebPaymentDetails($token)
     {
         $instance = self::getInstance();
         $params = array(
@@ -860,6 +867,42 @@ class PaylinePaymentGateway
         // Loop into result, format and sort some fields
         self::formatAndSortResult($result);
 
+        return $result;
+    }
+
+    /**
+     * Return payment informations provided by ps_payline_web_payment table if possible
+     * @since 2.0.0
+     * @param string $token
+     * @return array
+     */
+    public static function getPaymentInformations($token)
+    {
+        $result = PaylinePayment::getPaymentByToken($token);
+
+        if(empty($result)){
+            $result = self::getWebPaymentDetails($token);
+
+            $additionalData = [
+                'payment' => $result['payment'],
+                'formatedPrivateDataList' => $result['formatedPrivateDataList']
+            ];
+            if(isset($result['billingRecordList'])){
+                $additionalData['billingRecordList'] = $result['billingRecordList'];
+                $additionalData['paymentRecordId'] = $result['paymentRecordId'];
+            }
+
+            PaylinePayment::insert(
+                self::getCartIdFromOrderReference($result['order']['ref']),
+                $token,
+                $result['result']['code'],
+                $result['result']['shortMessage'],
+                'payment',
+                $result['contractNumber'],
+                $result['transaction']['id'],
+                $additionalData
+            );
+        }
         return $result;
     }
 
@@ -1229,4 +1272,23 @@ class PaylinePaymentGateway
         return $enabledContractsList;
     }
 
+    /**
+     * Create a request for Web Wallet
+     * @since 2.3.10
+     * @param array $params
+     * @return array
+     */
+    public static function createManageWebWalletRequest($params)
+    {
+        // Get Payline instance
+        $instance = self::getInstance();
+
+        $result = $instance->manageWebWallet($params);
+
+        if ($error = self::getErrorResponse($result)) {
+            $instance->getLogger()->addError(__FUNCTION__ , $error);
+        }
+
+        return $result;
+    }
 }

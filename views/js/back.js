@@ -150,6 +150,15 @@ function payline_delProduct(id)
     });
 };
 
+function toggleWidgetCustomizationGroup()
+{
+    if($('#PAYLINE_WEB_WIDGET_CUSTOM_on').is(':checked') && $('select#PAYLINE_WEB_CASH_UX').val() != 'redirect') {
+        $('#web-payment-configuration div.widget_customization').removeClass('hidden');
+    } else {
+        $('#web-payment-configuration div.widget_customization').addClass('hidden');
+    }
+}
+
 // AdminModules
 $(document).ready(function() {
     // Module configuration tab
@@ -167,6 +176,7 @@ $(document).ready(function() {
         } else {
             $('#web-payment-configuration div.payline-redirect-only').addClass('hidden');
         }
+        toggleWidgetCustomizationGroup();
     });
     $(document).on('change', 'select#PAYLINE_RECURRING_UX', function() {
         if ($(this).val() == 'redirect') {
@@ -175,6 +185,11 @@ $(document).ready(function() {
             $('#recurring-payment-configuration div.payline-redirect-only').addClass('hidden');
         }
     });
+    $(document).on('change', 'input[name="PAYLINE_WEB_WIDGET_CUSTOM"]', function() {
+        toggleWidgetCustomizationGroup();
+    });
+
+    toggleWidgetCustomizationGroup();
 
     // Contracts
     $('.payline-contracts-list').sortable({
@@ -231,4 +246,235 @@ $(document).ready(function() {
 
     // Product autocomplete
     payline_initProductsAutocomplete();
+
+    /*
+    * Preview payline CTA
+    * */
+
+    const previewContainer = document.getElementById("paylineCtaPreviewContainer");
+    const previewButton = document.getElementById('paylineCtaPreview');
+    const previewTextUnderCta = document.querySelector('#paylineCtaPreviewContainer p');
+    const inputCtaText = document.getElementById("PAYLINE_WEB_WIDGET_CTA_LABEL_1");
+    const ctaBgColorSelect = document.getElementById("PAYLINE_WEB_WIDGET_CSS_CTA_BG_COLOR");
+    const ctaBgColorHexadecimalSelect = document.querySelector('input[name="PAYLINE_WEB_WIDGET_CSS_CTA_BG_COLOR_HEXADECIMAL"]');
+    const ctaHoverDarkerSelect = document.getElementById("PAYLINE_WEB_WIDGET_CSS_CTA_BG_COLOR_HOVER_DARKER");
+    const ctaHoverLighterSelect = document.getElementById("PAYLINE_WEB_WIDGET_CSS_CTA_BG_COLOR_HOVER_LIGHTER");
+    const ctaColorSelect = document.getElementById("PAYLINE_WEB_WIDGET_CSS_CTA_TEXT_COLOR");
+    const ctaFontSizeSelect = document.getElementById("PAYLINE_WEB_WIDGET_CSS_FONT_SIZE");
+    const ctaBorderRadiusSelect = document.getElementById("PAYLINE_WEB_WIDGET_CSS_BORDER_RADIUS");
+    const ctaTextUnder = document.getElementById("PAYLINE_WEB_WIDGET_TEXT_UNDER_CTA_1");
+    const widgetContainerBgColorSelect = document.getElementById("PAYLINE_WEB_WIDGET_CSS_BG_COLOR");
+
+
+    const eventsListeners = [
+        {
+            type: 'blur',
+            elements: [inputCtaText, ctaTextUnder]
+        },
+        {
+            type: 'change',
+            elements: [ctaBgColorSelect, ctaColorSelect, ctaFontSizeSelect, ctaBorderRadiusSelect, widgetContainerBgColorSelect]
+        }
+    ];
+
+    eventsListeners.forEach(evtListener => {
+        evtListener.elements.forEach(evtListenerElement => {
+            if (evtListenerElement) {
+                evtListenerElement.addEventListener(evtListener.type, e => {
+                    updateWidgetPreview();
+                });
+            }
+        })
+    })
+
+    //--> Prevent click on preview Button
+    if (previewButton) {
+        previewButton.addEventListener('click', e => {
+            e.preventDefault();
+            return false;
+        })
+    }
+
+    //--> Couleur du hover
+    if (previewButton) {
+        previewButton.addEventListener('mouseover', function () {
+            let hoverCtaBgColor = '#1c7b27';
+            let isLighter = true;
+            let amount = 0;
+
+            //--> Darker version
+            if (ctaHoverDarkerSelect) {
+                const darkerAmountValue = ctaHoverDarkerSelect.value.trim();
+                if (darkerAmountValue > 0) {
+                    amount = parseInt(darkerAmountValue);
+                    hoverCtaBgColor = getCtaBgColor();
+                    isLighter = false;
+                }
+
+            }
+
+            //--> Lighter version
+            if (ctaHoverLighterSelect) {
+                const lighterAmountValue = ctaHoverLighterSelect.value.trim();
+                if (lighterAmountValue > 0) {
+                    amount = parseInt(lighterAmountValue);
+                    hoverCtaBgColor = getCtaBgColor();
+                    isLighter = true;
+                }
+            }
+
+
+            previewButton.style.backgroundColor = adjustHexColor(hoverCtaBgColor, amount, isLighter); // couleur de hover
+        });
+
+        previewButton.addEventListener('mouseout', function () {
+            previewButton.style.backgroundColor = getCtaBgColor(); // couleur normale
+        });
+    }
+
+    function adjustHexColor(hex, amount, lighten) {
+        hex = hex.replace(/^#/, '');
+        if (hex.length === 3) {
+            hex = hex.split('').map(x => x + x).join('');
+        }
+        let num = parseInt(hex, 16);
+        let r = (num >> 16) & 0xFF;
+        let g = (num >> 8) & 0xFF;
+        let b = num & 0xFF;
+
+        if (lighten) {
+            amount = 1 + (amount / 100);
+        } else {
+            amount = 1 - (amount / 100);
+        }
+
+
+        r = Math.min(255, Math.round(r * amount));
+        g = Math.min(255, Math.round(g * amount));
+        b = Math.min(255, Math.round(b * amount));
+
+        return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+    }
+
+
+    function getCtaBgColor() {
+        const defaultColor = '#26A434';
+        const colorFromSelect = ctaBgColorSelect?.value.trim();
+        const colorFromHex = ctaBgColorHexadecimalSelect?.value.trim();
+
+        return colorFromHex || colorFromSelect || defaultColor;
+    }
+
+    //--> Preview du bouton
+    function updateWidgetPreview() {
+
+        if (!previewContainer || !previewButton) {
+            return;
+        }
+
+        //--> Update button text
+        let buttonText = "Payer par carte";
+
+        if (inputCtaText) {
+            const newValue = inputCtaText.value.trim().replace('[[amount]]', '155.25 EUR');
+            if (newValue) {
+                buttonText = newValue;
+            }
+        }
+        previewButton.innerText = buttonText;
+
+        //--> Test under CTA
+        let textUnderCta = '';
+        if (ctaTextUnder) {
+            const newTextUnderCta = ctaTextUnder.value.trim().replace('[[amount]]', '155.25 EUR');
+            if (newTextUnderCta) {
+                textUnderCta = newTextUnderCta;
+            }
+        }
+        previewTextUnderCta.innerText = textUnderCta;
+
+        //--> Cta BG Color
+        previewButton.style.backgroundColor = getCtaBgColor();
+
+        //--> Text color
+        let ctaColor = '#fff';
+        if (ctaColorSelect) {
+            const newCtaColor = ctaColorSelect.value.trim();
+            if (newCtaColor) {
+                ctaColor = newCtaColor;
+            }
+        }
+        previewButton.style.color = ctaColor;
+
+        //--> font Size
+        let ctaFontSize = '18px';
+        const fontSizes = {
+            'small': '14px',
+            'average': '20px',
+            'big': '24px',
+        }
+        if (ctaFontSizeSelect) {
+            const newCtaFontSize = ctaFontSizeSelect.value.trim();
+            if (newCtaFontSize) {
+                ctaFontSize = fontSizes[newCtaFontSize];
+            }
+        }
+        previewButton.style.fontSize = ctaFontSize;
+
+        //--> Border Radius
+        let ctaBorderRadius = '6px';
+        const bordersRadius = {
+            'none': '0',
+            'small': '3px',
+            'average': '8px',
+            'big': '24px'
+        }
+        if (ctaBorderRadiusSelect) {
+            const newCtaBorderRadius = ctaBorderRadiusSelect.value.trim();
+            if (newCtaBorderRadius) {
+                ctaBorderRadius = bordersRadius[newCtaBorderRadius];
+            }
+        }
+
+        previewButton.style.borderRadius = ctaBorderRadius;
+
+        //--> Container background color
+        let widgetContainerBgColor = '#f8f8f8';
+        const widgetContainerBgColors = {
+            'lighter': '#fefefe',
+            'darker': '#dfdfdf'
+        }
+        if (widgetContainerBgColorSelect) {
+            const newWidgetContainerBgColor = widgetContainerBgColorSelect.value.trim();
+            if (newWidgetContainerBgColor) {
+                widgetContainerBgColor = widgetContainerBgColors[newWidgetContainerBgColor];
+            }
+        }
+
+        previewContainer.style.backgroundColor = widgetContainerBgColor;
+    }
+
+    function toggleHexInputOnColorChange() {
+        const $select = $('select[name="PAYLINE_WEB_WIDGET_CSS_CTA_BG_COLOR"]');
+        const $hexInputGroup = $('.hexadecimal-input');
+        const $hexInput = $hexInputGroup.find('input');
+
+        function toggleHexInput() {
+            if ($select.val() === 'hexadecimal') {
+                $hexInputGroup.show();
+            } else {
+                $hexInputGroup.hide();
+                $hexInput.val('');
+                previewButton.style.backgroundColor = $select.val();
+            }
+        }
+
+        toggleHexInput();
+        $select.on('change', toggleHexInput);
+        $hexInput.on('change', updateWidgetPreview);
+    }
+
+    toggleHexInputOnColorChange();
+    updateWidgetPreview();
 });
+

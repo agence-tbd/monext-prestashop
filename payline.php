@@ -4,7 +4,7 @@
  *
  * @author    Monext <support@payline.com>
  * @copyright Monext - http://www.payline.com
- * @version   2.3.9
+ * @version   2.3.10
  */
 
 use PrestaShop\PrestaShop\Core\Domain\Order\Exception\DuplicateOrderCartException;
@@ -16,6 +16,8 @@ if (!defined('_PS_VERSION_')) {
 require_once(_PS_ROOT_DIR_ . DIRECTORY_SEPARATOR . 'modules' . DIRECTORY_SEPARATOR . 'payline' . DIRECTORY_SEPARATOR . 'lib' . DIRECTORY_SEPARATOR . 'autoload.php');
 require_once(_PS_ROOT_DIR_ . DIRECTORY_SEPARATOR . 'modules' . DIRECTORY_SEPARATOR . 'payline' . DIRECTORY_SEPARATOR . 'class' . DIRECTORY_SEPARATOR . 'PaylineToken.php');
 require_once(_PS_ROOT_DIR_ . DIRECTORY_SEPARATOR . 'modules' . DIRECTORY_SEPARATOR . 'payline' . DIRECTORY_SEPARATOR . 'class' . DIRECTORY_SEPARATOR . 'PaylinePaymentGateway.php');
+require_once(_PS_ROOT_DIR_ . DIRECTORY_SEPARATOR . 'modules' . DIRECTORY_SEPARATOR . 'payline' . DIRECTORY_SEPARATOR . 'class' . DIRECTORY_SEPARATOR . 'PaylineWallet.php');
+require_once(_PS_ROOT_DIR_ . DIRECTORY_SEPARATOR . 'modules' . DIRECTORY_SEPARATOR . 'payline' . DIRECTORY_SEPARATOR . 'class' . DIRECTORY_SEPARATOR . 'PaylinePayment.php');
 
 class payline extends PaymentModule
 {
@@ -86,6 +88,9 @@ class payline extends PaymentModule
 
     const ORDER_CREATION_ERROR = 4;
 
+    const PAYLINE_WIDGET_CTA_MAX_LENGTH = 255;
+
+    const PAYLINE_WIDGET_TEXT_UNDER_CTA_MAX_LENGTH = 255;
 
     protected $is_eu_compatible;
 
@@ -105,8 +110,8 @@ class payline extends PaymentModule
         $this->name = 'payline';
         $this->tab = 'payments_gateways';
         $this->module_key = '';
-        $this->version = '2.3.9';
-        $this->ps_versions_compliancy = array('min' => '1.7.7', 'max' => _PS_VERSION_);
+        $this->version = '2.3.10';
+        $this->ps_versions_compliancy = array('min' => '1.7.1.0', 'max' => _PS_VERSION_);
         $this->author = 'Monext';
 
         $this->is_eu_compatible = 1;
@@ -137,8 +142,9 @@ class payline extends PaymentModule
      */
     protected function createTables()
     {
-        $res = Db::getInstance()->execute('
-        CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'payline_token` (
+        $sql = [];
+
+        $sql[] = 'CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'payline_token` (
             `id_order` int(10) UNSIGNED NOT NULL,
             `id_cart` int(10) UNSIGNED NOT NULL,
             `token` varchar(255) NULL,
@@ -146,9 +152,36 @@ class payline extends PaymentModule
             `transaction_id` varchar(50),
             UNIQUE `id_order` (`id_order`),
             UNIQUE `id_cart` (`id_cart`)
-        ) ENGINE='._MYSQL_ENGINE_.' CHARSET=utf8');
+        ) ENGINE='._MYSQL_ENGINE_.' CHARSET=utf8';
 
-        return $res;
+        $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'payline_wallet_id` (
+            `id_customer` int(10) NOT NULL,
+            `wallet_id` varchar(50) NOT NULL,
+            `date_add` datetime NOT NULL,
+            UNIQUE `id_customer` (`id_customer`),
+            UNIQUE `wallet_id` (`wallet_id`)
+        ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8';
+
+        $sql[]  = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'payline_web_payment` (
+            `id_cart` int(10) NOT NULL,
+            `token` varchar(255) NOT NULL,
+            `result_code` varchar(6) NOT NULL,
+            `message` varchar(50) NOT NULL,
+            `type` varchar(255) NOT NULL,
+            `contract_number` varchar(255) NOT NULL,
+            `transaction_id` varchar(50) NOT NULL,
+            `additional_data` TEXT,
+            `date_add` datetime NOT NULL,
+            UNIQUE `token` (`token`),
+        ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8';
+
+        foreach ($sql as $query) {
+            if (!Db::getInstance()->execute($query)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -579,6 +612,8 @@ class payline extends PaymentModule
 
         $this->context->smarty->assign(array(
             'subscriptionControllerLink' => $this->context->link->getModuleLink('payline', 'subscriptions', array(), true),
+            'walletControllerLink' => $this->context->link->getModuleLink('payline', 'wallet', array(), true),
+            'walletIsEnable' => Configuration::get('PAYLINE_WEB_CASH_BY_WALLET'),
         ));
         if ($this->prestaVersionCompare()) {
             $output .= $this->context->smarty->fetch($this->local_path.'views/templates/hook/1.7/customer_account.tpl');
@@ -958,9 +993,7 @@ class payline extends PaymentModule
 
         $paymentMethodList = array();
         // Assign to template enabled cards/contracts
-        $currentPos = Configuration::get('PAYLINE_POS');
-        $enabledContracts = PaylinePaymentGateway::getEnabledContracts();
-        $contractsList = PaylinePaymentGateway::getContractsByPosLabel($currentPos, $enabledContracts, true);
+        $contractsList = PaylinePaymentGateway::getContractsForCurrentPos();
         $this->smarty->assign(array(
             'payline_contracts' => $contractsList,
         ));
@@ -1010,13 +1043,54 @@ class payline extends PaymentModule
             } elseif ($uxMode == 'column' || $uxMode == 'tab') {
                 list($paymentRequest, $paymentRequestParams) = PaylinePaymentGateway::createPaymentRequest($this->context, PaylinePaymentGateway::WEB_PAYMENT_METHOD);
                 if (!empty($paymentRequest['token'])) {
+
+                    $widgetCustomization =[];
+                    if(Configuration::get('PAYLINE_WEB_WIDGET_CUSTOM')) {
+                        $widgetCustomization = array(
+                            'cta_label' => $this->getConfigLangValue('PAYLINE_WEB_WIDGET_CTA_LABEL'),
+                            'cta_bg_color' => Configuration::get('PAYLINE_WEB_WIDGET_CSS_CTA_BG_COLOR'),
+                            'cta_bg_color_hexadecimal' => Configuration::get('PAYLINE_WEB_WIDGET_CSS_CTA_BG_COLOR_HEXADECIMAL'),
+                            'cta_bg_color_hover_darker' => Configuration::get('PAYLINE_WEB_WIDGET_CSS_CTA_BG_COLOR_HOVER_DARKER'),
+                            'cta_bg_color_hover_lighter' => Configuration::get('PAYLINE_WEB_WIDGET_CSS_CTA_BG_COLOR_HOVER_LIGHTER'),
+                            'cta_text_color' => Configuration::get('PAYLINE_WEB_WIDGET_CSS_CTA_TEXT_COLOR'),
+                            'font_size' => Configuration::get('PAYLINE_WEB_WIDGET_CSS_FONT_SIZE'),
+                            'border_radius' => Configuration::get('PAYLINE_WEB_WIDGET_CSS_BORDER_RADIUS'),
+                            'bg_color' => Configuration::get('PAYLINE_WEB_WIDGET_CSS_BG_COLOR'),
+                            'text_under_cta' => $this->getConfigLangValue('PAYLINE_WEB_WIDGET_TEXT_UNDER_CTA'),
+                        );
+
+                        // Déterminer la couleur de base à utiliser entre cta_bg_color et cta_bg_color_hexadecimal
+                        $baseColor = !empty($widgetCustomization['cta_bg_color_hexadecimal'])
+                            ? $widgetCustomization['cta_bg_color_hexadecimal']
+                            : $widgetCustomization['cta_bg_color'];
+
+                        if (!empty($baseColor)) {
+                            if (!empty($widgetCustomization['cta_bg_color_hover_darker'])) {
+                                $widgetCustomization['cta_bg_color_hover_darker'] = $this->changeColor(
+                                    $baseColor,
+                                    $widgetCustomization['cta_bg_color_hover_darker'],
+                                    false
+                                );
+                            }
+
+                            if (!empty($widgetCustomization['cta_bg_color_hover_lighter'])) {
+                                $widgetCustomization['cta_bg_color_hover_lighter'] = $this->changeColor(
+                                    $baseColor,
+                                    $widgetCustomization['cta_bg_color_hover_lighter'],
+                                    false
+                                );
+                            }
+                        }
+                    }
+
                     $this->smarty->assign(array(
                         'payline_title' => $webCashTitle,
                         'payline_subtitle' => $webCashSubTitle,
                         'payline_token' => $paymentRequest['token'],
                         'payline_assets' => PaylinePaymentGateway::getAssetsToRegister(),
                         'payline_ux_mode' => Configuration::get('PAYLINE_WEB_CASH_UX'),
-                        'jsSelector' => 'paylineWidgetColumn'
+                        'jsSelector' => 'paylineWidgetColumn',
+                        'payline_widget_customization' => $widgetCustomization
                     ));
 
                     $webCash->setAdditionalInformation($this->fetch('module:payline/views/templates/front/1.7/payment.tpl'));
@@ -1197,9 +1271,7 @@ class payline extends PaymentModule
         }
 
         // Assign to template enabled cards/contracts
-        $currentPos = Configuration::get('PAYLINE_POS');
-        $enabledContracts = PaylinePaymentGateway::getEnabledContracts();
-        $contractsList = PaylinePaymentGateway::getContractsByPosLabel($currentPos, $enabledContracts, true);
+        $contractsList = PaylinePaymentGateway::getContractsForCurrentPos();
         $this->smarty->assign(array(
             'payline_contracts' => $contractsList,
         ));
@@ -1694,7 +1766,7 @@ class payline extends PaymentModule
             $orderStatusListForSelect = array();
             foreach (OrderState::getOrderStates($this->context->language->id) as $os) {
                 // Ignore order states related to a specific module or error/refund/waiting to be paid states
-                if (!empty($os['module_name']) || in_array((int)$os['id_order_state'], array(_PS_OS_ERROR_, _PS_OS_REFUND_, (int)Configuration::get('PAYLINE_ID_STATE_AUTOR'), (int)Configuration::get('PAYLINE_ID_STATE_PENDING'), (int)Configuration::get('PAYLINE_ID_ORDER_STATE_NX'), (int)Configuration::get('PAYLINE_ID_STATE_ALERT_SCHEDULE')))) {
+                if ($os['logable'] !=1) {
                     continue;
                 }
                 $orderStatusListForSelect[] = array(
@@ -1782,7 +1854,55 @@ class payline extends PaymentModule
             }
 
             return $subscribeDays;
+        } elseif ($listName === 'widget-cta-bg-color') {
+            return array(
+                array('value' => '', 'name' => $this->l('Payline default')),
+                array('value' => '#000000', 'name' => $this->l('Black')),
+                array('value' => '#d64c1d', 'name' => $this->l('Red')),
+                array('value' => '#00786c', 'name' => $this->l('Green')),
+                array('value' => '#42414f', 'name' => $this->l('Dark grey')),
+                array('value' => '#e6d001', 'name' => $this->l('Yellow')),
+                array('value' => 'hexadecimal', 'name' => $this->l('Hexadecimal value'))
+            );
+        } elseif ($listName === 'widget-cta-bg-hover') {
+            return array(
+                array('value' => '', 'name' => $this->l('No')),
+                array('value' => '10', 'name' => $this->l('10%')),
+                array('value' => '20', 'name' => $this->l('20%')),
+                array('value' => '30', 'name' => $this->l('30%'))
+            );
+        } elseif ($listName === 'widget-cta-color') {
+            return array(
+                array('value' => '', 'name' => $this->l('Payline default')),
+                array('value' => '#000000', 'name' => $this->l('Black')),
+                array('value' => '#FFFFFF', 'name' => $this->l('White'))
+            );
+        } elseif ($listName === 'widget-cta-font-size') {
+            return array(
+                array('value' => '', 'name' => $this->l('Payline default')),
+                array('value' => 'small', 'name' => $this->l('Small')),
+                array('value' => 'average', 'name' => $this->l('Average')),
+                array('value' => 'big', 'name' => $this->l('Big'))
+            );
+        } elseif ($listName === 'widget-cta-border-radius') {
+            return array(
+                array('value' => '', 'name' => $this->l('Payline default')),
+                array('value' => 'none', 'name' => $this->l('None')),
+                array('value' => 'small', 'name' => $this->l('Small')),
+                array('value' => 'average', 'name' => $this->l('Average')),
+                array('value' => 'big', 'name' => $this->l('Big'))
+            );
+        } elseif ($listName === 'widget-container-bg-color') {
+            return array(
+                array('value' => '', 'name' => $this->l('Payline default')),
+                array('value' => 'lighter', 'name' => $this->l('Lighter')),
+                array('value' => 'darker', 'name' => $this->l('Darker'))
+            );
         }
+
+
+
+
     }
 
     /**
@@ -2026,6 +2146,8 @@ class payline extends PaymentModule
                                 )
                             ),
                         ),
+
+
                         array(
                             'type' => 'select',
                             'desc' => $this->l('Redirect customer to secure payment page or display secure form in the checkout'),
@@ -2037,6 +2159,7 @@ class payline extends PaymentModule
                                 'name' => 'name',
                             ),
                         ),
+
                         array(
                             'form_group_class' => 'payline-redirect-only' . (Configuration::get('PAYLINE_WEB_CASH_UX') != 'redirect' ? ' hidden' : ''),
                             'class' => 'fixed-width-md',
@@ -2057,6 +2180,144 @@ class payline extends PaymentModule
                                 'id' => 'value',
                                 'name' => 'name',
                             ),
+                        ),
+                        array(
+                            'type' => 'html',
+                            'name' => '
+                            <h2>' . $this->l('Widget configuration') . '</h2>',
+                        ),
+
+                        array(
+                            'type' => 'switch',
+                            'label' => $this->l('Customisation'),
+                            'name' => 'PAYLINE_WEB_WIDGET_CUSTOM',
+                            'is_bool' => true,
+                            'desc' => $this->l('Choose wether to customize the widget'),
+                            'values' => array(
+                                array(
+                                    'id' => 'active_on',
+                                    'value' => true,
+                                    'label' => $this->l('Enabled'),
+                                ),
+                                array(
+                                    'id' => 'active_off',
+                                    'value' => false,
+                                    'label' => $this->l('Disabled'),
+                                )
+                            ),
+                        ),
+
+                        array(
+                            'form_group_class' => 'widget_customization',
+                            'lang' => true,
+                            'type' => 'text',
+                            'name' => 'PAYLINE_WEB_WIDGET_CTA_LABEL',
+                            'label' => $this->l('CTA Label'),
+                            'placeholder' => '',
+                            'maxlength' => self::PAYLINE_WIDGET_CTA_MAX_LENGTH,
+                            'desc' => $this->l('For example : "Confirm and pay [[amount]]" will display Confirm and pay 142.56 EUR -- [[amount]] is optional - No html tags allowed'),
+                        ),
+                        array(
+                            'form_group_class' => 'widget_customization',
+                            'type' => 'select',
+                            'name' => 'PAYLINE_WEB_WIDGET_CSS_CTA_BG_COLOR',
+                            'label' => $this->l('CTA color'),
+                            'options' => array(
+                                'query' => $this->getConfigSelectList('widget-cta-bg-color', PaylinePaymentGateway::WEB_PAYMENT_METHOD),
+                                'id' => 'value',
+                                'name' => 'name',
+                            ),
+                        ),
+                        array(
+                            'form_group_class' => 'widget_customization hexadecimal-input',
+                            'type' => 'color',
+                            'name' => 'PAYLINE_WEB_WIDGET_CSS_CTA_BG_COLOR_HEXADECIMAL',
+                            'label' => $this->l('CTA hexadecimal color'),
+                            'placeholder' => '',
+                            'maxlength' => 7,
+                            'desc' => $this->l('For example : #123456'),
+                        ),
+
+                        array(
+                            'form_group_class' => 'widget_customization',
+                            'type' => 'select',
+                            'name' => 'PAYLINE_WEB_WIDGET_CSS_CTA_BG_COLOR_HOVER_DARKER',
+                            'label' => $this->l('CTA hover darkey'),
+                            'options' => array(
+                                'query' => $this->getConfigSelectList('widget-cta-bg-hover', PaylinePaymentGateway::WEB_PAYMENT_METHOD),
+                                'id' => 'value',
+                                'name' => 'name',
+                            ),
+                        ),
+                        array(
+                            'form_group_class' => 'widget_customization',
+                            'type' => 'select',
+                            'name' => 'PAYLINE_WEB_WIDGET_CSS_CTA_BG_COLOR_HOVER_LIGHTER',
+                            'label' => $this->l('CTA hover lighter'),
+                            'options' => array(
+                                'query' => $this->getConfigSelectList('widget-cta-bg-hover', PaylinePaymentGateway::WEB_PAYMENT_METHOD),
+                                'id' => 'value',
+                                'name' => 'name',
+                            ),
+                        ),
+                        array(
+                            'form_group_class' => 'widget_customization',
+                            'type' => 'select',
+                            'name' => 'PAYLINE_WEB_WIDGET_CSS_CTA_TEXT_COLOR',
+                            'label' => $this->l('CTA color '),
+                            'options' => array(
+                                'query' => $this->getConfigSelectList('widget-cta-color', PaylinePaymentGateway::WEB_PAYMENT_METHOD),
+                                'id' => 'value',
+                                'name' => 'name',
+                            ),
+                        ),
+                        array(
+                            'form_group_class' => 'widget_customization',
+                            'type' => 'select',
+                            'name' => 'PAYLINE_WEB_WIDGET_CSS_FONT_SIZE',
+                            'label' => $this->l('CTA font size'),
+                            'options' => array(
+                                'query' => $this->getConfigSelectList('widget-cta-font-size', PaylinePaymentGateway::WEB_PAYMENT_METHOD),
+                                'id' => 'value',
+                                'name' => 'name',
+                            ),
+                        ),
+                        array(
+                            'form_group_class' => 'widget_customization',
+                            'type' => 'select',
+                            'name' => 'PAYLINE_WEB_WIDGET_CSS_BORDER_RADIUS',
+                            'label' => $this->l('Border radius'),
+                            'options' => array(
+                                'query' => $this->getConfigSelectList('widget-cta-border-radius', PaylinePaymentGateway::WEB_PAYMENT_METHOD),
+                                'id' => 'value',
+                                'name' => 'name',
+                            ),
+                        ),
+                        array(
+                            'form_group_class' => 'widget_customization',
+                            'type' => 'select',
+                            'name' => 'PAYLINE_WEB_WIDGET_CSS_BG_COLOR',
+                            'label' => $this->l('Widget backgound'),
+                            'options' => array(
+                                'query' => $this->getConfigSelectList('widget-container-bg-color', PaylinePaymentGateway::WEB_PAYMENT_METHOD),
+                                'id' => 'value',
+                                'name' => 'name',
+                            ),
+                        ),
+                        array(
+                            'form_group_class' => 'widget_customization',
+                            'lang' => true,
+                            'type' => 'text',
+                            'name' => 'PAYLINE_WEB_WIDGET_TEXT_UNDER_CTA',
+                            'label' => $this->l('Text under CTA'),
+                            'placeholder' => '',
+                            'maxlength' => self::PAYLINE_WIDGET_TEXT_UNDER_CTA_MAX_LENGTH,
+                            'desc' => $this->l('For example : Clicking on the button automatically implies acceptance of the T&Cs -- No html tags allowed'),
+                        ),
+                        array(
+                            'form_group_class' => 'widget_customization',
+                            'type' => 'html',
+                            'name' => '<div id="paylineCtaPreviewContainer"><button id="paylineCtaPreview" >Payer</button><p></p></div>',
                         ),
                     ),
                     'submit' => array(
@@ -2359,11 +2620,15 @@ class payline extends PaymentModule
                     ),
                     'input' => array(
                         array(
+                            'type' => 'html',
+                            'name' => '
+                            <h2>' . $this->l('Select and sort the contracts you want to make available to your customers') . '</h2>
+                            <p>' . $this->l('You can sort contracts by using drag & drop method') . '</p>',
+                        ),
+                        array(
                             'type' => 'contracts',
                             'name' => 'PAYLINE_CONTRACTS',
-                            'label' => '
-                            <h2>' . $this->l('Select and sort the contracts you want to make available to your customers') . '</h2>
-                            <p>' . $this->l('You can sort contracts by using drag & drop method') . '</p>',                            'col' => 12,
+                            'col' => 12,
                             'contractsList' => $contractsList,
                             'enabledContracts' => $enabledContracts,
                         ),
@@ -2388,10 +2653,8 @@ class payline extends PaymentModule
                         array(
                             'type' => 'contracts',
                             'name' => 'PAYLINE_ALT_CONTRACTS',
+                            'label' => $this->l('Select and sort the alternative contracts'),
                             'depends' => 'PAYLINE_ALT_CONTRACTS_AS_MAIN',
-                            'label' => '
-                            <h2>' . $this->l('Select and sort the alternative contracts you want to make available to your customers') . '</h2>
-                            <p>' . $this->l('You can sort contracts by using drag & drop method') . '</p>',
                             'col' => 12,
                             'contractsList' => $fallbackContractsList,
                             'enabledContracts' => $enabledFallbackContracts,
@@ -2535,6 +2798,19 @@ class payline extends PaymentModule
                 'PAYLINE_WEB_CASH_VALIDATION' => Configuration::get('PAYLINE_WEB_CASH_VALIDATION') ?: Configuration::get('PS_OS_PAYMENT'), //Default value if not set
                 'PAYLINE_WEB_CASH_BY_WALLET' => Configuration::get('PAYLINE_WEB_CASH_BY_WALLET'),
                 'PAYLINE_WEB_CASH_UX' => Configuration::get('PAYLINE_WEB_CASH_UX'),
+
+                'PAYLINE_WEB_WIDGET_CUSTOM' =>  Configuration::get('PAYLINE_WEB_WIDGET_CUSTOM'),
+                'PAYLINE_WEB_WIDGET_CTA_LABEL' => $this->getConfigLangValue('PAYLINE_WEB_WIDGET_CTA_LABEL'),
+                'PAYLINE_WEB_WIDGET_CSS_CTA_BG_COLOR' => Configuration::get('PAYLINE_WEB_WIDGET_CSS_CTA_BG_COLOR'),
+                'PAYLINE_WEB_WIDGET_CSS_CTA_BG_COLOR_HEXADECIMAL' => Configuration::get('PAYLINE_WEB_WIDGET_CSS_CTA_BG_COLOR_HEXADECIMAL'),
+                'PAYLINE_WEB_WIDGET_CSS_CTA_BG_COLOR_HOVER_DARKER' => Configuration::get('PAYLINE_WEB_WIDGET_CSS_CTA_BG_COLOR_HOVER_DARKER'),
+                'PAYLINE_WEB_WIDGET_CSS_CTA_BG_COLOR_HOVER_LIGHTER' => Configuration::get('PAYLINE_WEB_WIDGET_CSS_CTA_BG_COLOR_HOVER_LIGHTER'),
+                'PAYLINE_WEB_WIDGET_CSS_CTA_TEXT_COLOR' => Configuration::get('PAYLINE_WEB_WIDGET_CSS_CTA_TEXT_COLOR'),
+                'PAYLINE_WEB_WIDGET_CSS_FONT_SIZE' => Configuration::get('PAYLINE_WEB_WIDGET_CSS_FONT_SIZE'),
+                'PAYLINE_WEB_WIDGET_CSS_BORDER_RADIUS' => Configuration::get('PAYLINE_WEB_WIDGET_CSS_BORDER_RADIUS'),
+                'PAYLINE_WEB_WIDGET_CSS_BG_COLOR' => Configuration::get('PAYLINE_WEB_WIDGET_CSS_BG_COLOR'),
+                'PAYLINE_WEB_WIDGET_TEXT_UNDER_CTA' => $this->getConfigLangValue('PAYLINE_WEB_WIDGET_TEXT_UNDER_CTA'),
+
                 'PAYLINE_WEB_CASH_CUSTOM_CODE' => Configuration::get('PAYLINE_WEB_CASH_CUSTOM_CODE'),
                 'PAYLINE_DEFAULT_CATEGORY' => Configuration::get('PAYLINE_DEFAULT_CATEGORY'),
             );
@@ -2632,6 +2908,7 @@ class payline extends PaymentModule
                 'PAYLINE_CONTRACTS',
                 'PAYLINE_ALT_CONTRACTS',
                 'PAYLINE_SUBSCRIBE_PLIST',
+                'PAYLINE_WEB_WIDGET_CSS_CTA_TEXT_COLOR'
             );
             // Multilang fields
             $multiLangFields = array(
@@ -2641,6 +2918,8 @@ class payline extends PaymentModule
                 'PAYLINE_RECURRING_SUBTITLE',
                 'PAYLINE_SUBSCRIBE_TITLE',
                 'PAYLINE_SUBSCRIBE_SUBTITLE',
+                'PAYLINE_WEB_WIDGET_TEXT_UNDER_CTA',
+                'PAYLINE_WEB_WIDGET_CTA_LABEL'
             );
             foreach (array_keys($form_values) as $key) {
                 if ($key == 'PAYLINE_CONTRACTS' || $key == 'PAYLINE_ALT_CONTRACTS') {
@@ -2918,7 +3197,7 @@ class payline extends PaymentModule
      */
     public function processCustomerPaymentReturn($token)
     {
-        $paymentInfos = PaylinePaymentGateway::getPaymentInformations($token);
+        $paymentInfos = PaylinePaymentGateway::getWebPaymentDetails($token);
         $errorCode = null;
         $order = null;
 
@@ -2974,7 +3253,7 @@ class payline extends PaymentModule
     public function processNotification($token)
     {
         $validateOrderResult = false;
-        $paymentInfos = PaylinePaymentGateway::getPaymentInformations($token);
+        $paymentInfos = PaylinePaymentGateway::getWebPaymentDetails($token);
         // Check if id_cart and secure_key are the same
         if (isset($paymentInfos['formatedPrivateDataList']) && is_array($paymentInfos['formatedPrivateDataList'])
             && isset($paymentInfos['formatedPrivateDataList']['id_cart'])
@@ -3388,5 +3667,28 @@ class payline extends PaymentModule
             return true;
         }
         return false;
+    }
+
+    protected function changeColor($hex, $strenght, $lighter)
+    {
+        $hex = ltrim($hex, '#');
+
+        if (strlen($hex) == 3) {
+            $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+        }
+
+        $r = hexdec(substr($hex, 0, 2));
+        $g = hexdec(substr($hex, 2, 2));
+        $b = hexdec(substr($hex, 4, 2));
+
+        $factor = $lighter ? 1 + ($strenght / 100) : 1 - ($strenght / 100);
+
+        $r = max(0, min(255, intval($r * $factor)));
+        $g = max(0, min(255, intval($g * $factor)));
+        $b = max(0, min(255, intval($b * $factor)));
+
+        $newHex = sprintf("#%02x%02x%02x", $r, $g, $b);
+
+        return $newHex;
     }
 }

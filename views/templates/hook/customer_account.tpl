@@ -13,3 +13,11 @@
 		<span>{l s='Subscriptions' mod='payline'}</span>
 	</a>
 </li>
+{if $walletIsEnable}
+<li>
+  <a href="{$walletControllerLink|escape:'html':'UTF-8'}">
+    <i class="account_balance_wallet"></i>
+    <span>{l s='My wallet' mod='payline'}</span>
+  </a>
+</li>
+{/if}
