@@ -7,7 +7,7 @@
         'type' => 'prestashop-module',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
-        'dev' => false,
+        'dev' => true,
     ),
     'versions' => array(
         'ddtraceweb/monolog-parser' => array(
@@ -20,9 +20,9 @@
             'dev_requirement' => false,
         ),
         'monext/monext-php' => array(
-            'pretty_version' => '4.77.0',
-            'version' => '4.77.0.0',
-            'reference' => '091203d88aa2523549cce4586c5471a63a155e5b',
+            'pretty_version' => '25.9',
+            'version' => '25.9.0.0',
+            'reference' => 'a1f716547efc0f0e74ba3171ffef102236082211',
             'type' => 'library',
             'install_path' => __DIR__ . '/../monext/monext-php',
             'aliases' => array(),

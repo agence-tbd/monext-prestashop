@@ -47,17 +47,17 @@
         },
         {
             "name": "monext/monext-php",
-            "version": "4.77.0",
-            "version_normalized": "4.77.0.0",
+            "version": "25.9",
+            "version_normalized": "25.9.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Monext/monext-php-sdk.git",
-                "reference": "091203d88aa2523549cce4586c5471a63a155e5b"
+                "reference": "a1f716547efc0f0e74ba3171ffef102236082211"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Monext/monext-php-sdk/zipball/091203d88aa2523549cce4586c5471a63a155e5b",
-                "reference": "091203d88aa2523549cce4586c5471a63a155e5b",
+                "url": "https://api.github.com/repos/Monext/monext-php-sdk/zipball/a1f716547efc0f0e74ba3171ffef102236082211",
+                "reference": "a1f716547efc0f0e74ba3171ffef102236082211",
                 "shasum": ""
             },
             "require": {
@@ -69,7 +69,7 @@
                 "php": ">=5.6",
                 "symfony/cache": ">=3.4"
             },
-            "time": "2024-09-27T15:57:57+00:00",
+            "time": "2025-09-19T05:30:08+00:00",
             "type": "library",
             "installation-source": "dist",
             "autoload": {
@@ -104,7 +104,7 @@
                 "docs": "https://docs.monext.fr/display/DT",
                 "email": "support@payline.com",
                 "issues": "https://github.com/Monext/monext-php-sdk/issues",
-                "source": "https://github.com/Monext/monext-php-sdk/tree/4.77.0"
+                "source": "https://github.com/Monext/monext-php-sdk/tree/25.9"
             },
             "install-path": "../monext/monext-php"
         },
@@ -833,6 +833,6 @@
             "install-path": "../symfony/var-exporter"
         }
     ],
-    "dev": false,
+    "dev": true,
     "dev-package-names": []
 }
