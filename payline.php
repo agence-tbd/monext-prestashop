@@ -3007,6 +3007,10 @@ class payline extends PaymentModule
         }
     }
 
+
+
+
+
     /**
      * Process payment validation (customer shop return)
      * @param Cart $cart
@@ -3189,6 +3193,38 @@ class payline extends PaymentModule
         return array($order, $validateOrderResult, $errorMessage, $errorCode);
     }
 
+
+    /**
+     * @param $token
+     * @return false|string
+     */
+    protected function acquireLockForToken($token) {
+        if(!$token) {
+            return false;
+        }
+
+        $lockId = 'payline_'.sha1($token);
+        if(!Db::getInstance()->execute('SELECT GET_LOCK("'.$lockId.'", 10)', false)) {
+            PrestaShopLogger::addLog('payline::cannot acquire lock for token: ' . $token, 1);
+            return false;
+        }
+        return $lockId;
+    }
+
+
+    /**
+     * @param $lockId
+     * @return bool
+     *
+     */
+    protected function releaseLockForToken($lockId) {
+        if ($lockId) {
+            return Db::getInstance()->execute('SELECT RELEASE_LOCK("'.$lockId.'")', false);
+        }
+        return false;
+    }
+
+
     /**
      * Process payment validation (customer shop return)
      * @param string $token
@@ -3200,6 +3236,11 @@ class payline extends PaymentModule
         $paymentInfos = PaylinePaymentGateway::getWebPaymentDetails($token);
         $errorCode = null;
         $order = null;
+
+        $lockId = $this->acquireLockForToken($token);
+        if(!$lockId) {
+            return;
+        }
 
         // Check if id_cart and secure_key are the same
         if (isset($paymentInfos['formatedPrivateDataList']) && is_array($paymentInfos['formatedPrivateDataList'])
@@ -3240,8 +3281,10 @@ class payline extends PaymentModule
         if (!empty($paymentInfos['formatedPrivateDataList']['payment_method']) && $paymentInfos['formatedPrivateDataList']['payment_method'] == PaylinePaymentGateway::SUBSCRIBE_PAYMENT_METHOD) {
             Tools::redirect($this->context->link->getPageLink('order', true, $this->context->language->id, $urlParams));
         } else {
-                Tools::redirect($this->context->link->getPageLink('order', true, $this->context->language->id, $urlParams));
+            Tools::redirect($this->context->link->getPageLink('order', true, $this->context->language->id, $urlParams));
         }
+
+        $this->releaseLockForToken($lockId);
     }
 
     /**
@@ -3252,6 +3295,11 @@ class payline extends PaymentModule
      */
     public function processNotification($token)
     {
+        $lockId = $this->acquireLockForToken($token);
+        if(!$lockId) {
+            return;
+        }
+
         $validateOrderResult = false;
         $paymentInfos = PaylinePaymentGateway::getWebPaymentDetails($token);
         // Check if id_cart and secure_key are the same
@@ -3265,10 +3313,10 @@ class payline extends PaymentModule
                 // Check if cart exists
                 $cart = new Cart($idCart);
                 if (!Validate::isLoadedObject($cart)) {
-                    die(json_encode(array(
+                    $this->displayNotificationMessageAndStop(array(
                         'result' => $validateOrderResult,
                         'error' => 'Invalid Cart ID #'.$idCart.' - Cart does not exists',
-                    )));
+                    ), $lockId);
                 }
 
                 // Create the recurrent wallet payment
@@ -3283,11 +3331,11 @@ class payline extends PaymentModule
                         $errorCode = payline::SUBSCRIPTION_ERROR;
                         // Cancel the previous transaction
                         $cancelTransactionResult = PaylinePaymentGateway::cancelTransaction($paymentInfos, $this->l('Error: automatic cancel (cannot create subscription)'));
-                        die(json_encode(array(
+                        $this->displayNotificationMessageAndStop(array(
                             'result' => $validateOrderResult,
                             'error' => 'Unable to create subscription',
                             'errorCode' => $subscriptionRequest['result']['code'],
-                        )));
+                        ), $lockId);
                     }
                 } else {
                     // Create the order
@@ -3295,18 +3343,28 @@ class payline extends PaymentModule
                 }
             } else {
                 // Refused payment, or any other error case (customer case)
-                die(json_encode(array(
+                $this->displayNotificationMessageAndStop(array(
                     'result' => $validateOrderResult,
                     'error' => 'Transaction was not approved, or any other error case (customer case)',
                     'errorCode' => $paymentInfos['result']['code'],
-                )));
+                ), $lockId);
             }
             if (ob_get_length() > 0) {
                 ob_clean();
             }
-            die(json_encode(array('result' => $validateOrderResult)));
+            $this->displayNotificationMessageAndStop(array('result' => $validateOrderResult), $lockId);
         }
+
+        $this->releaseLockForToken($lockId);
     }
+
+
+    protected function displayNotificationMessageAndStop($message, $lockId) {
+        $this->releaseLockForToken($lockId);
+        die(json_encode($message));
+    }
+
+
 
     /**
      * Process order update from transaction notification
