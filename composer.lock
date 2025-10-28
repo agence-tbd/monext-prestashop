@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d5173cd3022b6b748bb5b4953ffbf7b3",
+    "content-hash": "bcbfff606149b7aaeb8febcfe08ed822",
     "packages": [
         {
             "name": "ddtraceweb/monolog-parser",
@@ -50,16 +50,16 @@
         },
         {
             "name": "monext/monext-php",
-            "version": "4.77.0",
+            "version": "25.9",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Monext/monext-php-sdk.git",
-                "reference": "091203d88aa2523549cce4586c5471a63a155e5b"
+                "reference": "a1f716547efc0f0e74ba3171ffef102236082211"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Monext/monext-php-sdk/zipball/091203d88aa2523549cce4586c5471a63a155e5b",
-                "reference": "091203d88aa2523549cce4586c5471a63a155e5b",
+                "url": "https://api.github.com/repos/Monext/monext-php-sdk/zipball/a1f716547efc0f0e74ba3171ffef102236082211",
+                "reference": "a1f716547efc0f0e74ba3171ffef102236082211",
                 "shasum": ""
             },
             "require": {
@@ -104,9 +104,9 @@
                 "docs": "https://docs.monext.fr/display/DT",
                 "email": "support@payline.com",
                 "issues": "https://github.com/Monext/monext-php-sdk/issues",
-                "source": "https://github.com/Monext/monext-php-sdk/tree/4.77.0"
+                "source": "https://github.com/Monext/monext-php-sdk/tree/25.9"
             },
-            "time": "2024-09-27T15:57:57+00:00"
+            "time": "2025-09-19T05:30:08+00:00"
         },
         {
             "name": "monolog/monolog",

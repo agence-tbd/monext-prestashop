@@ -255,6 +255,8 @@ class PaylinePaymentGateway
                     }
                 }
 
+
+
                 $finalContractsList = array_merge($finalContractsList, $disabledContracts);
 
                 return $finalContractsList;
@@ -268,7 +270,6 @@ class PaylinePaymentGateway
      * Assign logo image to each contract
      * @since 2.0.0
      * @param array $contracts
-     * @return array
      */
     private static function assignLogoToContracts(&$contractsList)
     {
@@ -293,11 +294,11 @@ class PaylinePaymentGateway
             'BCMC' => 'bcmc.png',
             'BUYSTER' => 'buyster.png',
             'CASINO' => 'casino.png',
-            'CASINO_3XCB' => 'Floa3x.png',
-            'CASINO_4XCB' => 'Floa4x.png',
+            'CASINO_3XCB' => 'floa3x.png',
+            'CASINO_4XCB' => 'floa4x.png',
             'CB/VISA/MASTERCARD' => 'cb_visa_mastercard.png',
             'CB/MC PASS' => 'cbpass.png',
-            'CB' => 'CB.jpg',
+            'CB' => 'cb.jpg',
             'CDGP' => 'cdgp.png',
             'COFINOGA' => 'cofinoga.png',
             'CYRILLUS' => 'cyrillus.png',
@@ -364,8 +365,9 @@ class PaylinePaymentGateway
                     $contract['logo'] = $logoFileByCardType[$carType];
                 }
             } else {
-                $contract['logo'] = strtolower(str_ireplace('_MNXT', '', $carType)) . '.png';
+                $contract['logo'] = str_ireplace('_MNXT', '', $carType) . '.png';
             }
+            $contract['logo'] = strtolower($contract['logo']);
         }
     }
 

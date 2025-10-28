@@ -1,5 +1,14 @@
 ## Changelog
 
+###  2.3.11 - 2025-10-28
+* Add missing logos
+* Add lock on notification
+* Upgrade SDK to 25.9 (php 8.4 compatibility)
+* Clean FR translations
+
+#### Environment (Development, QA validation)
+* Prestashop version: 8.2.1
+
 ###  2.3.10 - 2025-07-31
 * Add manage wallet on customer account
 * Ad capture on events
