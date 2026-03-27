@@ -29,7 +29,7 @@ jobs:
         run: composer archive --file=$REPO_NAME --format=zip
 
       - name: zip, zip, zipping
-        run: rm -rf $FOLDER_NAME && unzip $REPO_NAME.zip -d $FOLDER_NAME && rm $REPO_NAME.zip && zip -r $REPO_NAME.zip $FOLDER_NAME && rm -rf $FOLDER_NAME
+        run: rm -rf $FOLDER_NAME && unzip $REPO_NAME.zip -d $FOLDER_NAME && rm $REPO_NAME.zip && zip -r ${REPO_NAME}-${VERSION}.zip $FOLDER_NAME && rm -rf $FOLDER_NAME
 
       - name: Upload release asset
         env:
