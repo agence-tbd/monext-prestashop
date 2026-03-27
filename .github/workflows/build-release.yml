@@ -7,23 +7,33 @@ jobs:
   deploy:
     name: build dependencies & create artifact
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline
+    env:
+      REPO_NAME: ${{ github.event.repository.name }}
+      VERSION: ${{ github.ref_name }}
+      FOLDER_NAME: payline
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
         with:
-          path: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/payline
+          php-version: '7.4'
+          extensions: mbstring, xml, ctype, json, zip
+          coverage: none
 
-      - name: Zip artifact
-        run: |
-          cd ../
-          zip -r ${{ github.event.repository.name }}-${{ github.ref_name }}.zip . -x "payline/.*" -x "payline/composer.*"
+      - name: Install Composer dependencies
+        run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
-      - name: Upload asset using gh CLI
+      - name: Archive
+        run: composer archive --file=$REPO_NAME --format=zip
+
+      - name: zip, zip, zipping
+        run: rm -rf $FOLDER_NAME && unzip $REPO_NAME.zip -d $FOLDER_NAME && rm $REPO_NAME.zip && zip -r $REPO_NAME.zip $FOLDER_NAME && rm -rf $FOLDER_NAME
+
+      - name: Upload release asset
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ZIP_PATH: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/${{ github.event.repository.name }}-${{ github.ref_name }}.zip
         run: |
-          gh release upload ${{ github.event.release.tag_name }} $ZIP_PATH
+          ZIP_FILE="${REPO_NAME}-${VERSION}.zip"
+          gh release upload ${{ github.event.release.tag_name }} ${ZIP_FILE} --clobber

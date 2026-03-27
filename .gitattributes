@@ -1,0 +1,13 @@
+# Exclude development and configuration files from exports
+/.git export-ignore
+/.github export-ignore
+/.idea export-ignore
+/.gitattributes export-ignore
+/.gitignore export-ignore
+tests export-ignore
+composer.json export-ignore
+composer.lock export-ignore
+composer-setup.php export-ignore
+.gitlab-ci.yml export-ignore
+sonar-project.properties export-ignore
+phpunit.xml export-ignore
