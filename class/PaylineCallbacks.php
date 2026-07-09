@@ -27,7 +27,16 @@ class PaylineCallbacks
      */
     public function createOrder(Cart $cart, $paymentInfos, $token, $paymentRecordId = null)
     {
-        $amountPaid = ($paymentInfos['payment']['amount'] / 100);
+        $baseAmountPaid = $paymentInfos['payment']['amount'];
+
+        // Added to support TRD and ANCV payments with multiple transactions (#40213)
+        if(!empty($paymentInfos['paymentAdditionalList']['paymentAdditional']['payment']['amount'])) {
+            $additionalAmount = $paymentInfos['paymentAdditionalList']['paymentAdditional']['payment']['amount'];
+            $baseAmountPaid += $additionalAmount;
+        }
+
+        $amountPaid = ($baseAmountPaid / 100);
+
         // Set right order state depending on defined payment action
         if ($paymentInfos['payment']['action'] == 100) {
             $idOrderState = (int)Configuration::get('PAYLINE_ID_STATE_AUTOR');
