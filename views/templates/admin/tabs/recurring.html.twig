@@ -11,6 +11,11 @@
 %}
 {% extends '@Modules/payline/views/templates/admin/_layout.html.twig' %}
 
+{% block javascripts %}
+    <script src="{{ asset('themes/default/js/bundle/modal-confirmation.js') }}"></script>
+    <script src="{{ asset('themes/new-theme/public/product_page.bundle.js') }}"></script>
+{% endblock %}
+
 {% block tab_content %}
     {{ form_start(form) }}
     <div class="card">
