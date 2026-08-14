@@ -254,6 +254,9 @@ class PaylineCallbacks
         $paymentInfos = PaylinePaymentGateway::getWebPaymentDetails($token);
         $errorCode = null;
         $order = null;
+        // Check if id_cart and secure_key are present in the payment response
+        $idCart = null;
+        $cart = null;
 
         $module = $this->module;
         $lockId = $this->acquireLockForToken($token);
@@ -261,32 +264,45 @@ class PaylineCallbacks
             return;
         }
 
-        $cart = $this->context->cart;
-        $idCart = null;
-        if (PaylinePaymentGateway::isValidResponse($paymentInfos, PaylinePaymentGateway::$approvedResponseCode)
-            || PaylinePaymentGateway::isValidResponse($paymentInfos, PaylinePaymentGateway::$pendingResponseCode)) {
-            // Transaction approved or pending
+        if (!empty($paymentInfos['formatedPrivateDataList']) && is_array($paymentInfos['formatedPrivateDataList'])
+            && isset($paymentInfos['formatedPrivateDataList']['secure_key'])
+        ) {
+            if (PaylinePaymentGateway::isValidResponse($paymentInfos, PaylinePaymentGateway::$approvedResponseCode)
+                || PaylinePaymentGateway::isValidResponse($paymentInfos, PaylinePaymentGateway::$pendingResponseCode)) {
+                // Transaction approved or pending
 
-            // OK we can process the order via customer return
-            if($cart instanceof Cart){
-                $idCart = $cart->id;
-            }
-            // Check if cart exists
-            $cart = new Cart($idCart);
-            if (Validate::isLoadedObject($cart)) {
-                list($order, $validateOrderResult, $errorMessage, $errorCode) = $this->createOrder($cart, $paymentInfos, $token);
+                // OK we can process the order via customer return
+                $idCart = (int)($paymentInfos['formatedPrivateDataList']['id_cart'] ?? 0);
+                if (empty($idCart)) {
+                    $idCart = (int)PaylinePaymentGateway::getCartIdFromOrderReference(
+                        $paymentInfos['order']['ref'] ?? ''
+                    );
+                }
+
+                if ($idCart > 0) {
+                    $cart = new Cart($idCart);
+                } elseif ($this->context->cart instanceof Cart) {
+                    $idCart = (int)$this->context->cart->id;
+                    $cart = $this->context->cart;
+                }
+                // Check if cart exists
+                if (Validate::isLoadedObject($cart)) {
+                    list($order, $validateOrderResult, $errorMessage, $errorCode) = $this->createOrder($cart, $paymentInfos, $token);
+                } else {
+                    // Invalid Cart ID
+                    $errorCode = payline::INVALID_CART_ID;
+                }
             } else {
-                // Invalid Cart ID
-                $errorCode = payline::INVALID_CART_ID;
-            }
-        } else {
-            $errorCode = $paymentInfos['result']['code'];
-            if($cart instanceof Cart){
-                /** $order Order */
-                list($order, $validateOrderResult, $errorMessage) = $this->createOrder($cart, $paymentInfos, $token);
-                if($order->getCurrentState() == Configuration::get('PS_OS_ERROR')){
-                    PaylineToken::insert($order, $cart, $token, null, $paymentInfos['transaction']['id']);
-                    $this->addOrderPaymentToOrder($order, $paymentInfos['payment']['amount']/100, $paymentInfos['transaction']['id']);
+                $errorCode = $paymentInfos['result']['code'];
+                $idCart = (int)$paymentInfos['formatedPrivateDataList']['id_cart'];
+                $cart = new Cart($idCart);
+                if (Validate::isLoadedObject($cart)) {
+                    /** $order Order */
+                    list($order, $validateOrderResult, $errorMessage) = $this->createOrder($cart, $paymentInfos, $token);
+                    if ($order && $order->getCurrentState() == Configuration::get('PS_OS_ERROR')) {
+                        PaylineToken::insert($order, $cart, $token, null, $paymentInfos['transaction']['id']);
+                        $this->addOrderPaymentToOrder($order, $paymentInfos['payment']['amount'] / 100, $paymentInfos['transaction']['id']);
+                    }
                 }
             }
         }
