@@ -1,5 +1,14 @@
 ## Changelog
 
+###  2.4.2 - 2026-08-18
+* Prevent using the session cartId when creating an order
+* Remove the Symfony _legacy_link route, fix #15
+* Fix an error in product search (REC payment)
+* Add support for multiple payments
+
+#### Environment (Development, QA validation)
+* Prestashop version: 8.2.1, 9.0.1, 9.2.0
+
 
 ###  2.4.1 - 2026-06-23
 * Add support for Symfony forms in backend

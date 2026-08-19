@@ -5,7 +5,6 @@ payline_configuration_landing:
   defaults:
     _controller: 'PrestaShop\Module\Payline\Controller\Admin\PaylineConfigurationController::landing'
     _legacy_controller: AdminModules
-    _legacy_link: AdminModules:configure:payline
 
 # General configuration (credentials)
 payline_configuration_general:
@@ -14,7 +13,6 @@ payline_configuration_general:
   defaults:
     _controller: 'PrestaShop\Module\Payline\Controller\Admin\PaylineConfigurationController::general'
     _legacy_controller: AdminModules
-    _legacy_link: AdminModules:configure:payline
 
 # Simple payment (web payment)
 payline_configuration_web:
@@ -23,7 +21,6 @@ payline_configuration_web:
   defaults:
     _controller: 'PrestaShop\Module\Payline\Controller\Admin\PaylineConfigurationController::webPayment'
     _legacy_controller: AdminModules
-    _legacy_link: AdminModules:configure:payline
 
 # NX payment
 payline_configuration_nx:
@@ -32,7 +29,6 @@ payline_configuration_nx:
   defaults:
     _controller: 'PrestaShop\Module\Payline\Controller\Admin\PaylineConfigurationController::nxPayment'
     _legacy_controller: AdminModules
-    _legacy_link: AdminModules:configure:payline
 
 # Recurring payment
 payline_configuration_recurring:
@@ -41,7 +37,6 @@ payline_configuration_recurring:
   defaults:
     _controller: 'PrestaShop\Module\Payline\Controller\Admin\PaylineConfigurationController::recurringPayment'
     _legacy_controller: AdminModules
-    _legacy_link: AdminModules:configure:payline
 
 # Contracts configuration
 payline_configuration_contracts:
@@ -50,7 +45,6 @@ payline_configuration_contracts:
   defaults:
     _controller: 'PrestaShop\Module\Payline\Controller\Admin\PaylineConfigurationController::contracts'
     _legacy_controller: AdminModules
-    _legacy_link: AdminModules:configure:payline
 
 # Logs viewing
 payline_configuration_logs:
@@ -59,7 +53,6 @@ payline_configuration_logs:
   defaults:
     _controller: 'PrestaShop\Module\Payline\Controller\Admin\PaylineConfigurationController::logs'
     _legacy_controller: AdminModules
-    _legacy_link: AdminModules:configure:payline
 
 # Logs AJAX endpoint
 payline_logs_ajax:
